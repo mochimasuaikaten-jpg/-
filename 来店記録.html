@@ -1,0 +1,2011 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>顧客来店記録</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Hiragino Sans', 'Yu Gothic', 'Meiryo', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 40px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            background: white;
+            color: #667eea;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1em;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .search-bar {
+            padding: 20px 30px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 12px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .search-bar input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .customers-list {
+            width: 350px;
+            border-right: 2px solid #f0f0f0;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+
+        .sort-controls {
+            padding: 15px;
+            background: white;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .sort-controls select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.95em;
+            cursor: pointer;
+            background: white;
+        }
+
+        .sort-controls select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .customer-item {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .customer-item:hover {
+            background: #e8f0fe;
+        }
+
+        .customer-item.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .customer-name {
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        .customer-count {
+            background: rgba(255,255,255,0.3);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+        }
+
+        .customer-item.active .customer-count {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .customer-item.dragging {
+            opacity: 0.5;
+        }
+
+        .customer-item.drag-over {
+            border-top: 3px solid #667eea;
+        }
+
+        .customer-item[draggable="true"] {
+            cursor: move;
+        }
+
+        .visits-panel {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 60px 20px;
+        }
+
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .customer-header {
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .customer-title {
+            font-size: 2em;
+            color: #333;
+        }
+
+        .customer-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-secondary {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95em;
+        }
+
+        .btn-secondary:hover {
+            background: #5568d3;
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95em;
+        }
+
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+
+        .visits-timeline {
+            position: relative;
+        }
+
+        .visit-item {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .visit-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+
+        .visit-date {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .visit-items {
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .visit-memo {
+            color: #666;
+            font-size: 0.95em;
+            padding: 10px;
+            background: #fff9e6;
+            border-left: 3px solid #ffc107;
+            border-radius: 5px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+        }
+
+        .visit-actions {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .visit-item:hover .visit-actions {
+            opacity: 1;
+        }
+
+        .visit-actions button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.2s;
+        }
+
+        .btn-edit {
+            background: #2196f3;
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background: #1976d2;
+        }
+
+        .btn-delete {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #d32f2f;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1em;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-actions button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-save {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-save:hover {
+            background: #45a049;
+        }
+
+        .btn-cancel {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-cancel:hover {
+            background: #d32f2f;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            flex: 1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            padding: 15px 30px;
+            border-bottom: 2px solid #f0f0f0;
+            background: white;
+        }
+        .view-btn {
+            padding: 8px 24px;
+            border: 2px solid #667eea;
+            border-radius: 20px;
+            background: white;
+            color: #667eea;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: all 0.2s;
+        }
+        .view-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        .calendar-view {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+            padding: 25px;
+        }
+        .calendar-view.active {
+            display: block;
+        }
+        .main-content.list-mode {
+            display: flex;
+        }
+        .main-content.calendar-mode {
+            display: none;
+        }
+        .cal-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .cal-nav button {
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+        .cal-nav h2 {
+            font-size: 1.4em;
+            color: #333;
+            min-width: 180px;
+            text-align: center;
+        }
+        .cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+        .cal-header-cell {
+            text-align: center;
+            font-weight: bold;
+            padding: 8px;
+            font-size: 0.85em;
+            color: #666;
+        }
+        .cal-header-cell:first-child { color: #e53935; }
+        .cal-header-cell:last-child { color: #1e88e5; }
+        .cal-cell {
+            min-height: 80px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 6px;
+            background: white;
+            cursor: default;
+            transition: background 0.2s;
+        }
+        .cal-cell.has-visits {
+            cursor: pointer;
+            background: #f0f0ff;
+        }
+        .cal-cell.has-visits:hover {
+            background: #e0e4ff;
+        }
+        .cal-cell.today {
+            border: 2px solid #667eea;
+        }
+        .cal-cell.other-month {
+            background: #fafafa;
+            opacity: 0.5;
+        }
+        .cal-day {
+            font-size: 0.85em;
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 4px;
+        }
+        .cal-cell:nth-child(7n+1) .cal-day { color: #e53935; }
+        .cal-cell:nth-child(7n) .cal-day { color: #1e88e5; }
+        .cal-visit-dot {
+            font-size: 0.72em;
+            background: #667eea;
+            color: white;
+            border-radius: 10px;
+            padding: 2px 6px;
+            margin: 1px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .cal-more {
+            font-size: 0.72em;
+            color: #999;
+            margin-top: 2px;
+        }
+        .cal-day-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        .cal-day-modal.active { display: flex; }
+        .cal-day-modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            width: 90%;
+            max-width: 480px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        .cal-day-modal-content h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        .cal-day-visit {
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .cal-day-visit-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        .cal-day-visit-detail {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .type-tabs {
+            display: flex;
+            background: white;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .type-tab {
+            flex: 1;
+            padding: 9px 4px;
+            border: none;
+            background: white;
+            color: #999;
+            font-size: 0.82em;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .type-tab.active {
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .type-tab:hover {
+            background: #f0f4ff;
+        }
+
+        /* 顧客パネル内カレンダー */
+        .panel-view-toggle {
+            display: flex;
+            gap: 6px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            padding: 3px;
+        }
+
+        .panel-view-btn {
+            padding: 7px 18px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: #999;
+            font-family: inherit;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .panel-view-btn.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+
+        .panel-cal-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .panel-cal-nav button {
+            width: 34px;
+            height: 34px;
+            border: 2px solid #e0e0e0;
+            border-radius: 50%;
+            background: white;
+            color: #667eea;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .panel-cal-nav button:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .panel-cal-nav h3 {
+            font-size: 1.15em;
+            color: #333;
+            min-width: 140px;
+            text-align: center;
+        }
+
+        .panel-cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+
+        .panel-cal-header {
+            text-align: center;
+            font-size: 0.78em;
+            font-weight: 700;
+            color: #999;
+            padding: 6px 0;
+        }
+
+        .panel-cal-header:first-child { color: #e53935; }
+        .panel-cal-header:last-child { color: #1e88e5; }
+
+        .panel-cal-cell {
+            min-height: 70px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 5px;
+            background: white;
+            transition: all 0.2s;
+            cursor: default;
+        }
+
+        .panel-cal-cell.has-visit {
+            background: #f0f0ff;
+            border-color: #c5cae9;
+            cursor: pointer;
+        }
+
+        .panel-cal-cell.has-visit:hover {
+            background: #e0e4ff;
+            border-color: #667eea;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(102,126,234,0.15);
+        }
+
+        .panel-cal-cell.today-cell {
+            border: 2px solid #667eea;
+        }
+
+        .panel-cal-cell.other {
+            opacity: 0.3;
+        }
+
+        .panel-cal-day {
+            font-size: 0.78em;
+            font-weight: 700;
+            color: #555;
+            margin-bottom: 3px;
+        }
+
+        .panel-cal-cell:nth-child(7n+1) .panel-cal-day { color: #e53935; }
+        .panel-cal-cell:nth-child(7n) .panel-cal-day { color: #1e88e5; }
+
+        .panel-cal-dot {
+            font-size: 0.65em;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 4px;
+            padding: 2px 5px;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .panel-cal-amount {
+            font-size: 0.62em;
+            color: #667eea;
+            font-weight: 700;
+        }
+
+        /* パネル内カレンダー日付詳細ポップアップ */
+        .panel-day-detail {
+            background: #f8f9ff;
+            border: 2px solid #667eea;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            animation: fadeSlide 0.2s ease-out;
+        }
+
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .panel-day-detail h4 {
+            color: #667eea;
+            font-size: 0.95em;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-day-detail h4 button {
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 1.2em;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .panel-day-detail h4 button:hover {
+            background: #eee;
+            color: #333;
+        }
+
+        .panel-day-visit-item {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 6px;
+        }
+
+        .panel-day-visit-item .visit-items-line {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 3px;
+        }
+
+        .panel-day-visit-item .visit-amount-line {
+            color: #667eea;
+            font-weight: 700;
+            font-size: 0.9em;
+        }
+
+        .panel-day-visit-item .visit-memo-line {
+            color: #888;
+            font-size: 0.85em;
+            margin-top: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .customers-list {
+                width: 100%;
+                max-height: 200px;
+                border-right: none;
+                border-bottom: 2px solid #f0f0f0;
+            }
+
+            .stats {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌸 顧客来店記録</h1>
+            <div class="header-actions">
+                <button class="btn-primary" onclick="openCustomerModal()">➕ 新規顧客追加</button>
+                <button class="btn-primary" onclick="showOverallStats()">📊 全体統計</button>
+                <button class="btn-primary" onclick="showRanking()">🏆 売上ランキング</button>
+                <button class="btn-primary" onclick="exportData()" style="background:#4CAF50;color:white;">📤 データ書出</button>
+                <button class="btn-primary" onclick="document.getElementById('importFile').click()" style="background:#FF9800;color:white;">📥 データ読込</button>
+                <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+            </div>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="🔍 顧客名で検索..." onkeyup="searchCustomers()">
+        </div>
+
+        <div class="view-toggle">
+            <button class="view-btn active" id="btnList" onclick="switchView('list')">📋 リスト</button>
+            <button class="view-btn" id="btnCalendar" onclick="switchView('calendar')">📅 カレンダー</button>
+        </div>
+
+        <div class="calendar-view" id="calendarView">
+            <div class="cal-nav">
+                <button onclick="calPrevMonth()">‹</button>
+                <h2 id="calTitle"></h2>
+                <button onclick="calNextMonth()">›</button>
+            </div>
+            <div class="cal-grid" id="calGrid"></div>
+        </div>
+
+        <div class="main-content" id="mainContent">
+            <div class="customers-list">
+                <div class="type-tabs">
+                    <button class="type-tab active" id="tabAll" onclick="setTypeFilter('all')">全て</button>
+                    <button class="type-tab" id="tabGrave" onclick="setTypeFilter('grave')">🪦 墓管理</button>
+                    <button class="type-tab" id="tabGeneral" onclick="setTypeFilter('general')">🌸 一般</button>
+                </div>
+                <div class="sort-controls">
+                    <select id="sortOrder" onchange="changeSortOrder()">
+                        <option value="name">五十音順</option>
+                        <option value="lastVisit">最終来店日順</option>
+                        <option value="visitCount">来店回数順</option>
+                        <option value="totalAmount">売上金額順</option>
+                        <option value="manual">手動並び替え</option>
+                    </select>
+                </div>
+                <div id="customersList">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👥</div>
+                        <p>顧客がいません</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="visits-panel" id="visitsPanel">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📋</div>
+                    <p>左から顧客を選択してください</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 顧客追加/編集モーダル -->
+    <div id="customerModal" class="modal">
+        <div class="modal-content">
+            <h2 id="customerModalTitle">新規顧客追加</h2>
+            <form id="customerForm">
+                <div class="form-group">
+                    <label>顧客名</label>
+                    <input type="text" id="customerName" required placeholder="例: 田中太郎">
+                </div>
+                <div class="form-group">
+                    <label>顧客タイプ</label>
+                    <div style="display: flex; gap: 20px; margin-top: 4px;">
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="radio" name="customerType" value="general" checked> 🌸 一般
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="radio" name="customerType" value="grave"> 🪦 墓管理
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>メモ（自由記入）</label>
+                    <textarea id="customerNote" rows="5" placeholder="例: 誕生日 3/15、バラが好き、犬を飼ってる"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-save">保存</button>
+                    <button type="button" class="btn-cancel" onclick="closeCustomerModal()">キャンセル</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 来店記録追加/編集モーダル -->
+    <div id="visitModal" class="modal">
+        <div class="modal-content">
+            <h2 id="visitModalTitle">来店記録追加</h2>
+            <form id="visitForm">
+                <div class="form-group">
+                    <label>来店日</label>
+                    <input type="date" id="visitDate" required>
+                </div>
+                <div class="form-group">
+                    <label>購入商品（無記入の場合は「花」になります）</label>
+                    <input type="text" id="visitItems" placeholder="例: バラ、チューリップ">
+                </div>
+                <div class="form-group">
+                    <label>購入金額（円）</label>
+                    <input type="number" id="visitAmount" placeholder="例: 3000" min="0">
+                </div>
+                <div class="form-group">
+                    <label>メモ（任意）</label>
+                    <textarea id="visitMemo" rows="3" placeholder="例: 誕生日プレゼント用"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-save">保存</button>
+                    <button type="button" class="btn-cancel" onclick="closeVisitModal()">キャンセル</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 全体統計モーダル -->
+    <div id="statsModal" class="modal">
+        <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+            <h2>📊 全体統計</h2>
+            <div id="statsContent"></div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeStatsModal()">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ランキングモーダル -->
+    <div id="rankingModal" class="modal">
+        <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+            <h2>🏆 売上ランキング</h2>
+            <div id="rankingContent"></div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeRankingModal()">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- カレンダー日付詳細モーダル -->
+    <div class="cal-day-modal" id="calDayModal">
+        <div class="cal-day-modal-content">
+            <h3 id="calDayTitle"></h3>
+            <div id="calDayContent"></div>
+            <button class="btn-cancel" style="width:100%; margin-top:15px; padding:10px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; background:#f44336; color:white;" onclick="closeCalDayModal()">閉じる</button>
+        </div>
+    </div>
+
+    <script>
+        let customers = JSON.parse(localStorage.getItem('customerVisits')) || [];
+        let selectedCustomerId = null;
+        let editingCustomerId = null;
+        let editingVisitId = null;
+        let sortOrder = localStorage.getItem('customerSortOrder') || 'name';
+        let manualOrder = JSON.parse(localStorage.getItem('customerManualOrder')) || [];
+        let draggedElement = null;
+        let isDragging = false;
+        let customerTypeFilter = 'all'; // 'all' | 'grave' | 'general'
+        let panelViewMode = 'list'; // 'list' | 'calendar'
+        let panelCalYear = new Date().getFullYear();
+        let panelCalMonth = new Date().getMonth();
+
+        function setTypeFilter(type) {
+            customerTypeFilter = type;
+            document.getElementById('tabAll').classList.toggle('active', type === 'all');
+            document.getElementById('tabGrave').classList.toggle('active', type === 'grave');
+            document.getElementById('tabGeneral').classList.toggle('active', type === 'general');
+            renderCustomersList();
+        }
+
+        function saveData() {
+            localStorage.setItem('customerVisits', JSON.stringify(customers));
+        }
+
+        function exportData() {
+            const data = {
+                customers: customers,
+                sortOrder: sortOrder,
+                manualOrder: manualOrder,
+                exportDate: new Date().toISOString()
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '顧客来店記録_' + new Date().toISOString().slice(0, 10) + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.customers && Array.isArray(data.customers)) {
+                        const count = data.customers.length;
+                        if (customers.length > 0) {
+                            if (!confirm(`既存データ(${customers.length}件)を上書きしますか？\n読込データ: ${count}件`)) {
+                                event.target.value = '';
+                                return;
+                            }
+                        }
+                        customers = data.customers;
+                        saveData();
+                        if (data.sortOrder) {
+                            sortOrder = data.sortOrder;
+                            localStorage.setItem('customerSortOrder', sortOrder);
+                        }
+                        if (data.manualOrder) {
+                            manualOrder = data.manualOrder;
+                            localStorage.setItem('customerManualOrder', JSON.stringify(manualOrder));
+                        }
+                        selectedCustomerId = null;
+                        renderCustomersList();
+                        renderVisitsPanel();
+                        alert(`${count}件の顧客データを読み込みました！`);
+                    } else {
+                        alert('無効なデータ形式です');
+                    }
+                } catch (err) {
+                    alert('ファイルの読み込みに失敗しました: ' + err.message);
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        function changeSortOrder() {
+            sortOrder = document.getElementById('sortOrder').value;
+            localStorage.setItem('customerSortOrder', sortOrder);
+            renderCustomersList();
+        }
+
+        function getSortedCustomers(customerList) {
+            const sorted = [...customerList];
+
+            switch (sortOrder) {
+                case 'name':
+                    sorted.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+                    break;
+                case 'lastVisit':
+                    sorted.sort((a, b) => {
+                        const aLastVisit = a.visits.length > 0 ? new Date(a.visits[0].date) : new Date(0);
+                        const bLastVisit = b.visits.length > 0 ? new Date(b.visits[0].date) : new Date(0);
+                        return bLastVisit - aLastVisit; // 新しい順
+                    });
+                    break;
+                case 'visitCount':
+                    sorted.sort((a, b) => b.visits.length - a.visits.length); // 多い順
+                    break;
+                case 'totalAmount':
+                    sorted.sort((a, b) => {
+                        const aTotal = a.visits.reduce((sum, v) => sum + (v.amount || 0), 0);
+                        const bTotal = b.visits.reduce((sum, v) => sum + (v.amount || 0), 0);
+                        return bTotal - aTotal;
+                    });
+                    break;
+                case 'manual':
+                    // 手動並び替え
+                    sorted.sort((a, b) => {
+                        const aIndex = manualOrder.indexOf(a.id);
+                        const bIndex = manualOrder.indexOf(b.id);
+                        if (aIndex === -1 && bIndex === -1) return 0;
+                        if (aIndex === -1) return 1;
+                        if (bIndex === -1) return -1;
+                        return aIndex - bIndex;
+                    });
+                    break;
+            }
+
+            return sorted;
+        }
+
+        function saveManualOrder(sortedCustomers) {
+            manualOrder = sortedCustomers.map(c => c.id);
+            localStorage.setItem('customerManualOrder', JSON.stringify(manualOrder));
+        }
+
+        function renderCustomersList() {
+            const list = document.getElementById('customersList');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+            const filteredCustomers = customers.filter(c => {
+                if (!c.name.toLowerCase().includes(searchTerm)) return false;
+                if (customerTypeFilter === 'grave') return c.customerType === 'grave';
+                if (customerTypeFilter === 'general') return !c.customerType || c.customerType === 'general';
+                return true;
+            });
+
+            const sortedCustomers = getSortedCustomers(filteredCustomers);
+
+            if (sortedCustomers.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👥</div>
+                        <p>${searchTerm ? '該当する顧客がいません' : '顧客がいません'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const isDraggable = sortOrder === 'manual';
+
+            list.innerHTML = sortedCustomers.map(customer => `
+                <div class="customer-item ${selectedCustomerId === customer.id ? 'active' : ''}"
+                     data-customer-id="${customer.id}"
+                     ${isDraggable ? 'draggable="true"' : ''}
+                     onclick="selectCustomer(${customer.id})">
+                    <div class="customer-name">${customer.name}</div>
+                    <div class="customer-count">${customer.visits.length}回</div>
+                </div>
+            `).join('');
+
+            // ドラッグ&ドロップのイベントリスナーを追加
+            if (isDraggable) {
+                const items = list.querySelectorAll('.customer-item');
+                items.forEach(item => {
+                    item.addEventListener('dragstart', handleDragStart);
+                    item.addEventListener('dragover', handleDragOver);
+                    item.addEventListener('drop', handleDrop);
+                    item.addEventListener('dragend', handleDragEnd);
+                    item.addEventListener('dragleave', handleDragLeave);
+                });
+            }
+        }
+
+        function handleDragStart(e) {
+            draggedElement = this;
+            isDragging = true;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', '');
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            this.classList.add('drag-over');
+            return false;
+        }
+
+        function handleDragLeave(e) {
+            this.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.stopPropagation();
+            e.preventDefault();
+
+            if (draggedElement !== this) {
+                const list = document.getElementById('customersList');
+                const items = Array.from(list.querySelectorAll('.customer-item'));
+
+                const draggedIndex = items.indexOf(draggedElement);
+                const targetIndex = items.indexOf(this);
+
+                const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+                const filteredCustomers = customers.filter(c => {
+                    if (!c.name.toLowerCase().includes(searchTerm)) return false;
+                    if (customerTypeFilter === 'grave') return c.customerType === 'grave';
+                    if (customerTypeFilter === 'general') return !c.customerType || c.customerType === 'general';
+                    return true;
+                });
+                const sortedCustomers = getSortedCustomers(filteredCustomers);
+
+                // 配列内で要素を移動
+                const movedCustomer = sortedCustomers.splice(draggedIndex, 1)[0];
+                sortedCustomers.splice(targetIndex, 0, movedCustomer);
+
+                // 手動順序を保存
+                saveManualOrder(sortedCustomers);
+
+                // 再描画
+                renderCustomersList();
+            }
+
+            this.classList.remove('drag-over');
+            return false;
+        }
+
+        function handleDragEnd(e) {
+            isDragging = false;
+            this.classList.remove('dragging');
+            const items = document.querySelectorAll('.customer-item');
+            items.forEach(item => item.classList.remove('drag-over'));
+        }
+
+        function selectCustomer(customerId) {
+            if (isDragging) return;
+            selectedCustomerId = customerId;
+            renderCustomersList();
+            renderVisitsPanel();
+        }
+
+        function renderVisitsPanel() {
+            const panel = document.getElementById('visitsPanel');
+            const customer = customers.find(c => c.id === selectedCustomerId);
+
+            if (!customer) {
+                panel.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <p>左から顧客を選択してください</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const totalVisits = customer.visits.length;
+            const lastVisit = customer.visits.length > 0
+                ? new Date(customer.visits[0].date).toLocaleDateString('ja-JP')
+                : 'なし';
+
+            // 金額統計
+            const totalAmount = customer.visits.reduce((sum, v) => sum + (v.amount || 0), 0);
+            const avgAmount = totalVisits > 0 ? Math.round(totalAmount / totalVisits) : 0;
+            const maxAmount = customer.visits.length > 0 ? Math.max(...customer.visits.map(v => v.amount || 0)) : 0;
+
+            // 今月の統計
+            const now = new Date();
+            const thisMonthVisits = customer.visits.filter(v => {
+                const vDate = new Date(v.date);
+                return vDate.getMonth() === now.getMonth() && vDate.getFullYear() === now.getFullYear();
+            });
+            const thisMonthAmount = thisMonthVisits.reduce((sum, v) => sum + (v.amount || 0), 0);
+
+            // 今年の統計
+            const thisYearVisits = customer.visits.filter(v => {
+                const vDate = new Date(v.date);
+                return vDate.getFullYear() === now.getFullYear();
+            });
+            const thisYearAmount = thisYearVisits.reduce((sum, v) => sum + (v.amount || 0), 0);
+
+            const visitsHtml = customer.visits.length > 0
+                ? customer.visits.map(visit => `
+                    <div class="visit-item">
+                        <div class="visit-date">📅 ${new Date(visit.date).toLocaleDateString('ja-JP', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            weekday: 'short'
+                        })}</div>
+                        <div class="visit-items">🌸 ${visit.items}${visit.amount ? ` - <strong style="color: #667eea;">¥${visit.amount.toLocaleString()}</strong>` : ''}</div>
+                        ${visit.memo ? `<div class="visit-memo">📝 ${visit.memo}</div>` : ''}
+                        <div class="visit-actions">
+                            <button class="btn-edit" onclick="editVisit(${customer.id}, ${visit.id})">編集</button>
+                            <button class="btn-delete" onclick="deleteVisit(${customer.id}, ${visit.id})">削除</button>
+                        </div>
+                    </div>
+                `).join('')
+                : '<div class="empty-state"><div class="empty-state-icon">📝</div><p>来店記録がありません</p></div>';
+
+            panel.innerHTML = `
+                <div class="customer-header">
+                    <div class="customer-title">${customer.name}</div>
+                    <div class="customer-actions">
+                        <button class="btn-secondary" onclick="openVisitModal()">➕ 来店記録追加</button>
+                        <button class="btn-secondary" onclick="editCustomer(${customer.id})">✏️ 名前編集</button>
+                        <button class="btn-danger" onclick="deleteCustomer(${customer.id})">顧客削除</button>
+                    </div>
+                </div>
+
+                ${customer.note ? `<div style="background: #f0f4ff; border-left: 4px solid #667eea; padding: 15px; border-radius: 8px; margin-bottom: 20px; white-space: pre-wrap; color: #444; font-size: 0.95em;">📝 ${customer.note}</div>` : ''}
+
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-number">${totalVisits}</div>
+                        <div class="stat-label">総来店回数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">¥${totalAmount.toLocaleString()}</div>
+                        <div class="stat-label">累計購入金額</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">¥${avgAmount.toLocaleString()}</div>
+                        <div class="stat-label">平均購入単価</div>
+                    </div>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-number">${thisMonthVisits.length}回</div>
+                        <div class="stat-label">今月の来店</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">¥${thisMonthAmount.toLocaleString()}</div>
+                        <div class="stat-label">今月の購入額</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${thisYearVisits.length}回</div>
+                        <div class="stat-label">今年の来店</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">¥${thisYearAmount.toLocaleString()}</div>
+                        <div class="stat-label">今年の購入額</div>
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h3 style="color:#555; font-size:1.05em;">来店履歴</h3>
+                    <div class="panel-view-toggle">
+                        <button class="panel-view-btn ${panelViewMode === 'list' ? 'active' : ''}" onclick="switchPanelView('list')">📋 リスト</button>
+                        <button class="panel-view-btn ${panelViewMode === 'calendar' ? 'active' : ''}" onclick="switchPanelView('calendar')">📅 カレンダー</button>
+                    </div>
+                </div>
+
+                <div id="panelListView" style="${panelViewMode === 'list' ? '' : 'display:none;'}">
+                    <div class="visits-timeline">
+                        ${visitsHtml}
+                    </div>
+                </div>
+
+                <div id="panelCalView" style="${panelViewMode === 'calendar' ? '' : 'display:none;'}">
+                    <div id="panelDayDetail"></div>
+                    <div class="panel-cal-nav">
+                        <button onclick="panelCalPrev()">‹</button>
+                        <h3 id="panelCalTitle"></h3>
+                        <button onclick="panelCalNext()">›</button>
+                    </div>
+                    <div class="panel-cal-grid" id="panelCalGrid"></div>
+                </div>
+            `;
+
+            if (panelViewMode === 'calendar') {
+                renderPanelCalendar();
+            }
+        }
+
+        function searchCustomers() {
+            renderCustomersList();
+        }
+
+        function openCustomerModal() {
+            editingCustomerId = null;
+            document.getElementById('customerModalTitle').textContent = '新規顧客追加';
+            document.getElementById('customerForm').reset();
+            document.querySelector('input[name="customerType"][value="general"]').checked = true;
+            document.getElementById('customerModal').classList.add('active');
+        }
+
+        function editCustomer(customerId) {
+            const customer = customers.find(c => c.id === customerId);
+            editingCustomerId = customerId;
+            document.getElementById('customerModalTitle').textContent = '顧客情報編集';
+            document.getElementById('customerName').value = customer.name;
+            document.getElementById('customerNote').value = customer.note || '';
+            const typeVal = customer.customerType || 'general';
+            document.querySelector(`input[name="customerType"][value="${typeVal}"]`).checked = true;
+            document.getElementById('customerModal').classList.add('active');
+        }
+
+        function closeCustomerModal() {
+            document.getElementById('customerModal').classList.remove('active');
+        }
+
+        function openVisitModal() {
+            if (!selectedCustomerId) return;
+
+            editingVisitId = null;
+            document.getElementById('visitModalTitle').textContent = '来店記録追加';
+            document.getElementById('visitForm').reset();
+            document.getElementById('visitDate').valueAsDate = new Date();
+            document.getElementById('visitModal').classList.add('active');
+        }
+
+        function closeVisitModal() {
+            document.getElementById('visitModal').classList.remove('active');
+        }
+
+        function editVisit(customerId, visitId) {
+            const customer = customers.find(c => c.id === customerId);
+            const visit = customer.visits.find(v => v.id === visitId);
+
+            editingVisitId = visitId;
+            document.getElementById('visitModalTitle').textContent = '来店記録編集';
+            document.getElementById('visitDate').value = visit.date;
+            document.getElementById('visitItems').value = visit.items;
+            document.getElementById('visitAmount').value = visit.amount || '';
+            document.getElementById('visitMemo').value = visit.memo || '';
+            document.getElementById('visitModal').classList.add('active');
+        }
+
+        function deleteVisit(customerId, visitId) {
+            if (!confirm('この来店記録を削除しますか？')) return;
+
+            const customer = customers.find(c => c.id === customerId);
+            customer.visits = customer.visits.filter(v => v.id !== visitId);
+            saveData();
+            renderVisitsPanel();
+        }
+
+        function deleteCustomer(customerId) {
+            const customer = customers.find(c => c.id === customerId);
+            if (!confirm(`${customer.name}を削除しますか？\nすべての来店記録も削除されます。`)) return;
+
+            customers = customers.filter(c => c.id !== customerId);
+
+            // 手動並び替えの順序からも削除
+            manualOrder = manualOrder.filter(id => id !== customerId);
+            localStorage.setItem('customerManualOrder', JSON.stringify(manualOrder));
+
+            selectedCustomerId = null;
+            saveData();
+            renderCustomersList();
+            renderVisitsPanel();
+        }
+
+        document.getElementById('customerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('customerName').value;
+            const note = document.getElementById('customerNote').value;
+            const customerType = document.querySelector('input[name="customerType"]:checked').value;
+
+            if (editingCustomerId) {
+                // 編集モード
+                const customer = customers.find(c => c.id === editingCustomerId);
+                customer.name = name;
+                customer.note = note;
+                customer.customerType = customerType;
+
+                saveData();
+                renderCustomersList();
+                renderVisitsPanel();
+                closeCustomerModal();
+            } else {
+                // 新規追加モード
+                const newCustomer = {
+                    id: Date.now(),
+                    name: name,
+                    note: note,
+                    customerType: customerType,
+                    visits: []
+                };
+
+                customers.push(newCustomer);
+
+                // 手動並び替えの順序に追加
+                if (!manualOrder.includes(newCustomer.id)) {
+                    manualOrder.push(newCustomer.id);
+                    localStorage.setItem('customerManualOrder', JSON.stringify(manualOrder));
+                }
+
+                saveData();
+                renderCustomersList();
+                closeCustomerModal();
+
+                selectCustomer(newCustomer.id);
+            }
+        });
+
+        document.getElementById('visitForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const customer = customers.find(c => c.id === selectedCustomerId);
+            const date = document.getElementById('visitDate').value;
+            const items = document.getElementById('visitItems').value.trim() || '花';
+            const amount = parseInt(document.getElementById('visitAmount').value) || 0;
+            const memo = document.getElementById('visitMemo').value;
+
+            if (editingVisitId) {
+                const visit = customer.visits.find(v => v.id === editingVisitId);
+                visit.date = date;
+                visit.items = items;
+                visit.amount = amount;
+                visit.memo = memo;
+            } else {
+                const newVisit = {
+                    id: Date.now(),
+                    date: date,
+                    items: items,
+                    amount: amount,
+                    memo: memo
+                };
+                customer.visits.unshift(newVisit);
+            }
+
+            customer.visits.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            saveData();
+            renderCustomersList();
+            renderVisitsPanel();
+            closeVisitModal();
+        });
+
+        // 全体統計表示
+        function showOverallStats() {
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth();
+
+            // 全期間の統計
+            let totalVisits = 0;
+            let totalAmount = 0;
+            const allVisits = [];
+
+            customers.forEach(customer => {
+                totalVisits += customer.visits.length;
+                customer.visits.forEach(visit => {
+                    totalAmount += visit.amount || 0;
+                    allVisits.push({...visit, customerName: customer.name});
+                });
+            });
+
+            // 今月の統計
+            const thisMonthVisits = allVisits.filter(v => {
+                const vDate = new Date(v.date);
+                return vDate.getMonth() === currentMonth && vDate.getFullYear() === currentYear;
+            });
+            const thisMonthAmount = thisMonthVisits.reduce((sum, v) => sum + (v.amount || 0), 0);
+
+            // 今年の統計
+            const thisYearVisits = allVisits.filter(v => {
+                const vDate = new Date(v.date);
+                return vDate.getFullYear() === currentYear;
+            });
+            const thisYearAmount = thisYearVisits.reduce((sum, v) => sum + (v.amount || 0), 0);
+
+            // 月別集計（今年）
+            const monthlyStats = {};
+            for (let m = 0; m < 12; m++) {
+                monthlyStats[m] = {visits: 0, amount: 0};
+            }
+            thisYearVisits.forEach(v => {
+                const month = new Date(v.date).getMonth();
+                monthlyStats[month].visits++;
+                monthlyStats[month].amount += v.amount || 0;
+            });
+
+            // 年別集計
+            const yearlyStats = {};
+            allVisits.forEach(v => {
+                const year = new Date(v.date).getFullYear();
+                if (!yearlyStats[year]) {
+                    yearlyStats[year] = {visits: 0, amount: 0};
+                }
+                yearlyStats[year].visits++;
+                yearlyStats[year].amount += v.amount || 0;
+            });
+
+            const avgAmount = totalVisits > 0 ? Math.round(totalAmount / totalVisits) : 0;
+
+            let html = `
+                <div class="stats" style="margin-bottom: 30px;">
+                    <div class="stat-card">
+                        <div class="stat-number">${customers.length}</div>
+                        <div class="stat-label">総顧客数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${totalVisits}</div>
+                        <div class="stat-label">総来店回数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">¥${totalAmount.toLocaleString()}</div>
+                        <div class="stat-label">総売上</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">¥${avgAmount.toLocaleString()}</div>
+                        <div class="stat-label">平均購入単価</div>
+                    </div>
+                </div>
+
+                <h3 style="margin-bottom: 15px; color: #667eea;">📅 今月（${currentYear}年${currentMonth + 1}月）</h3>
+                <div class="stats" style="margin-bottom: 30px;">
+                    <div class="stat-card">
+                        <div class="stat-number">${thisMonthVisits.length}</div>
+                        <div class="stat-label">来店回数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">¥${thisMonthAmount.toLocaleString()}</div>
+                        <div class="stat-label">売上</div>
+                    </div>
+                </div>
+
+                <h3 style="margin-bottom: 15px; color: #667eea;">📆 今年（${currentYear}年）</h3>
+                <div class="stats" style="margin-bottom: 30px;">
+                    <div class="stat-card">
+                        <div class="stat-number">${thisYearVisits.length}</div>
+                        <div class="stat-label">来店回数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">¥${thisYearAmount.toLocaleString()}</div>
+                        <div class="stat-label">売上</div>
+                    </div>
+                </div>
+
+                <h3 style="margin-bottom: 15px; color: #667eea;">📊 ${currentYear}年 月別売上</h3>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 30px;">
+                    ${Object.entries(monthlyStats).map(([month, data]) => `
+                        <div style="display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #e0e0e0;">
+                            <span style="font-weight: 600;">${parseInt(month) + 1}月</span>
+                            <span>${data.visits}回</span>
+                            <span style="color: #667eea; font-weight: bold;">¥${data.amount.toLocaleString()}</span>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <h3 style="margin-bottom: 15px; color: #667eea;">📈 年別売上</h3>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px;">
+                    ${Object.entries(yearlyStats).sort((a, b) => b[0] - a[0]).map(([year, data]) => `
+                        <div style="display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #e0e0e0;">
+                            <span style="font-weight: 600;">${year}年</span>
+                            <span>${data.visits}回</span>
+                            <span style="color: #667eea; font-weight: bold;">¥${data.amount.toLocaleString()}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            document.getElementById('statsContent').innerHTML = html;
+            document.getElementById('statsModal').classList.add('active');
+        }
+
+        function closeStatsModal() {
+            document.getElementById('statsModal').classList.remove('active');
+        }
+
+        // ランキング表示
+        function showRanking() {
+            const customerStats = customers.map(customer => {
+                const totalAmount = customer.visits.reduce((sum, v) => sum + (v.amount || 0), 0);
+                const visitCount = customer.visits.length;
+                const avgAmount = visitCount > 0 ? Math.round(totalAmount / visitCount) : 0;
+                const lastVisit = customer.visits.length > 0 ? customer.visits[0].date : null;
+
+                return {
+                    name: customer.name,
+                    totalAmount,
+                    visitCount,
+                    avgAmount,
+                    lastVisit
+                };
+            }).sort((a, b) => b.totalAmount - a.totalAmount);
+
+            let html = `
+                <h3 style="margin-bottom: 15px; color: #667eea;">💰 累計購入金額ランキング</h3>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 30px;">
+                    ${customerStats.map((c, index) => `
+                        <div style="display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #e0e0e0; ${index < 3 ? 'background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);' : ''}">
+                            <div style="font-size: 1.5em; font-weight: bold; width: 50px; ${index === 0 ? 'color: #FFD700;' : index === 1 ? 'color: #C0C0C0;' : index === 2 ? 'color: #CD7F32;' : 'color: #999;'}">${index + 1}</div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; font-size: 1.1em; margin-bottom: 5px;">${c.name}</div>
+                                <div style="font-size: 0.9em; opacity: 0.7;">${c.visitCount}回来店 / 平均¥${c.avgAmount.toLocaleString()}</div>
+                            </div>
+                            <div style="font-size: 1.3em; font-weight: bold; color: #667eea;">¥${c.totalAmount.toLocaleString()}</div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <h3 style="margin-bottom: 15px; color: #667eea;">🔄 来店回数ランキング</h3>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px;">
+                    ${customerStats.sort((a, b) => b.visitCount - a.visitCount).map((c, index) => `
+                        <div style="display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #e0e0e0;">
+                            <div style="font-size: 1.5em; font-weight: bold; width: 50px; color: ${index < 3 ? '#667eea' : '#999'};">${index + 1}</div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; font-size: 1.1em; margin-bottom: 5px;">${c.name}</div>
+                                <div style="font-size: 0.9em; opacity: 0.7;">累計¥${c.totalAmount.toLocaleString()} / 平均¥${c.avgAmount.toLocaleString()}</div>
+                            </div>
+                            <div style="font-size: 1.3em; font-weight: bold; color: #764ba2;">${c.visitCount}回</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            document.getElementById('rankingContent').innerHTML = html;
+            document.getElementById('rankingModal').classList.add('active');
+        }
+
+        function closeRankingModal() {
+            document.getElementById('rankingModal').classList.remove('active');
+        }
+
+        // モーダル外クリックで閉じる
+        document.getElementById('customerModal').addEventListener('click', function(e) {
+            if (e.target === this) closeCustomerModal();
+        });
+
+        document.getElementById('visitModal').addEventListener('click', function(e) {
+            if (e.target === this) closeVisitModal();
+        });
+
+        document.getElementById('statsModal').addEventListener('click', function(e) {
+            if (e.target === this) closeStatsModal();
+        });
+
+        document.getElementById('rankingModal').addEventListener('click', function(e) {
+            if (e.target === this) closeRankingModal();
+        });
+
+        // カレンダー
+        let calYear = new Date().getFullYear();
+        let calMonth = new Date().getMonth();
+
+        function switchView(mode) {
+            const calView = document.getElementById('calendarView');
+            const mainContent = document.getElementById('mainContent');
+            const btnList = document.getElementById('btnList');
+            const btnCal = document.getElementById('btnCalendar');
+            if (mode === 'calendar') {
+                calView.style.display = 'block';
+                mainContent.style.display = 'none';
+                btnCal.classList.add('active');
+                btnList.classList.remove('active');
+                renderCalendar();
+            } else {
+                calView.style.display = 'none';
+                mainContent.style.display = 'flex';
+                btnList.classList.add('active');
+                btnCal.classList.remove('active');
+            }
+        }
+
+        function calPrevMonth() {
+            calMonth--;
+            if (calMonth < 0) { calMonth = 11; calYear--; }
+            renderCalendar();
+        }
+
+        function calNextMonth() {
+            calMonth++;
+            if (calMonth > 11) { calMonth = 0; calYear++; }
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            document.getElementById('calTitle').textContent = calYear + '年 ' + (calMonth + 1) + '月';
+            const grid = document.getElementById('calGrid');
+            const today = new Date();
+
+            // 曜日ヘッダー
+            const dayNames = ['日','月','火','水','木','金','土'];
+            let html = dayNames.map(d => `<div class="cal-header-cell">${d}</div>`).join('');
+
+            // 月の初日と日数
+            const firstDay = new Date(calYear, calMonth, 1).getDay();
+            const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+            const prevDays = new Date(calYear, calMonth, 0).getDate();
+
+            // 全来店データを日付でマップ
+            const visitMap = {};
+            customers.forEach(customer => {
+                customer.visits.forEach(visit => {
+                    const d = visit.date;
+                    if (!visitMap[d]) visitMap[d] = [];
+                    visitMap[d].push({ customerName: customer.name, items: visit.items, amount: visit.amount });
+                });
+            });
+
+            function dateKey(y, m, d) {
+                return y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+            }
+
+            // 前月の日
+            for (let i = 0; i < firstDay; i++) {
+                const d = prevDays - firstDay + 1 + i;
+                html += `<div class="cal-cell other-month"><div class="cal-day">${d}</div></div>`;
+            }
+
+            // 当月の日
+            for (let d = 1; d <= daysInMonth; d++) {
+                const key = dateKey(calYear, calMonth, d);
+                const visits = visitMap[key] || [];
+                const isToday = today.getFullYear() === calYear && today.getMonth() === calMonth && today.getDate() === d;
+                const hasVisits = visits.length > 0;
+                const dotsHtml = visits.slice(0, 3).map(v =>
+                    `<div class="cal-visit-dot">${v.customerName}</div>`
+                ).join('');
+                const moreHtml = visits.length > 3 ? `<div class="cal-more">+${visits.length - 3}件</div>` : '';
+                html += `
+                    <div class="cal-cell ${hasVisits ? 'has-visits' : ''} ${isToday ? 'today' : ''}"
+                         ${hasVisits ? `onclick="openCalDay('${key}')"` : ''}>
+                        <div class="cal-day">${d}</div>
+                        ${dotsHtml}${moreHtml}
+                    </div>`;
+            }
+
+            // 次月の日で埋める
+            const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+            for (let d = 1; d <= totalCells - firstDay - daysInMonth; d++) {
+                html += `<div class="cal-cell other-month"><div class="cal-day">${d}</div></div>`;
+            }
+
+            grid.innerHTML = html;
+        }
+
+        function openCalDay(dateKey) {
+            const [y, m, d] = dateKey.split('-');
+            document.getElementById('calDayTitle').textContent = `${y}年${parseInt(m)}月${parseInt(d)}日の来店`;
+            const visits = [];
+            customers.forEach(customer => {
+                customer.visits.forEach(v => {
+                    if (v.date === dateKey) visits.push({ customerName: customer.name, items: v.items, amount: v.amount, memo: v.memo });
+                });
+            });
+            document.getElementById('calDayContent').innerHTML = visits.map(v => `
+                <div class="cal-day-visit">
+                    <div class="cal-day-visit-name">🌸 ${v.customerName}</div>
+                    <div class="cal-day-visit-detail">${v.items}${v.amount ? ' ・ ¥' + v.amount.toLocaleString() : ''}</div>
+                    ${v.memo ? `<div class="cal-day-visit-detail" style="color:#888; margin-top:4px;">📝 ${v.memo}</div>` : ''}
+                </div>
+            `).join('');
+            document.getElementById('calDayModal').classList.add('active');
+        }
+
+        function closeCalDayModal() {
+            document.getElementById('calDayModal').classList.remove('active');
+        }
+
+        document.getElementById('calDayModal').addEventListener('click', function(e) {
+            if (e.target === this) closeCalDayModal();
+        });
+
+        // パネル内ビュー切替
+        function switchPanelView(mode) {
+            panelViewMode = mode;
+            renderVisitsPanel();
+        }
+
+        // パネル内カレンダーナビ
+        function panelCalPrev() {
+            panelCalMonth--;
+            if (panelCalMonth < 0) { panelCalMonth = 11; panelCalYear--; }
+            renderPanelCalendar();
+        }
+
+        function panelCalNext() {
+            panelCalMonth++;
+            if (panelCalMonth > 11) { panelCalMonth = 0; panelCalYear++; }
+            renderPanelCalendar();
+        }
+
+        // パネル内カレンダー描画
+        function renderPanelCalendar() {
+            const titleEl = document.getElementById('panelCalTitle');
+            const gridEl = document.getElementById('panelCalGrid');
+            if (!titleEl || !gridEl) return;
+
+            titleEl.textContent = panelCalYear + '年 ' + (panelCalMonth + 1) + '月';
+
+            const customer = customers.find(c => c.id === selectedCustomerId);
+            if (!customer) return;
+
+            // この顧客の来店を日付マップに
+            const visitMap = {};
+            customer.visits.forEach(v => {
+                if (!visitMap[v.date]) visitMap[v.date] = [];
+                visitMap[v.date].push(v);
+            });
+
+            const today = new Date();
+            const dayNames = ['日','月','火','水','木','金','土'];
+            const firstDay = new Date(panelCalYear, panelCalMonth, 1).getDay();
+            const daysInMonth = new Date(panelCalYear, panelCalMonth + 1, 0).getDate();
+            const prevDays = new Date(panelCalYear, panelCalMonth, 0).getDate();
+
+            function dkey(y, m, d) {
+                return y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+            }
+
+            let html = dayNames.map(d => `<div class="panel-cal-header">${d}</div>`).join('');
+
+            // 前月
+            for (let i = 0; i < firstDay; i++) {
+                const d = prevDays - firstDay + 1 + i;
+                html += `<div class="panel-cal-cell other"><div class="panel-cal-day">${d}</div></div>`;
+            }
+
+            // 当月
+            for (let d = 1; d <= daysInMonth; d++) {
+                const key = dkey(panelCalYear, panelCalMonth, d);
+                const visits = visitMap[key] || [];
+                const isToday = today.getFullYear() === panelCalYear && today.getMonth() === panelCalMonth && today.getDate() === d;
+                const hasVisit = visits.length > 0;
+
+                let cellContent = `<div class="panel-cal-day">${d}</div>`;
+                if (hasVisit) {
+                    const totalAmt = visits.reduce((s, v) => s + (v.amount || 0), 0);
+                    visits.slice(0, 2).forEach(v => {
+                        cellContent += `<div class="panel-cal-dot">${v.items}</div>`;
+                    });
+                    if (visits.length > 2) {
+                        cellContent += `<div style="font-size:0.62em; color:#999;">+${visits.length - 2}件</div>`;
+                    }
+                    if (totalAmt > 0) {
+                        cellContent += `<div class="panel-cal-amount">¥${totalAmt.toLocaleString()}</div>`;
+                    }
+                }
+
+                html += `<div class="panel-cal-cell ${hasVisit ? 'has-visit' : ''} ${isToday ? 'today-cell' : ''}" ${hasVisit ? `onclick="showPanelDayDetail('${key}')"` : ''}>${cellContent}</div>`;
+            }
+
+            // 次月
+            const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+            for (let d = 1; d <= totalCells - firstDay - daysInMonth; d++) {
+                html += `<div class="panel-cal-cell other"><div class="panel-cal-day">${d}</div></div>`;
+            }
+
+            gridEl.innerHTML = html;
+        }
+
+        // パネル内カレンダー日付詳細
+        function showPanelDayDetail(dateKey) {
+            const detailEl = document.getElementById('panelDayDetail');
+            if (!detailEl) return;
+
+            const customer = customers.find(c => c.id === selectedCustomerId);
+            if (!customer) return;
+
+            const visits = customer.visits.filter(v => v.date === dateKey);
+            if (visits.length === 0) { detailEl.innerHTML = ''; return; }
+
+            const [y, m, d] = dateKey.split('-');
+            const dt = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+            const dayNames = ['日','月','火','水','木','金','土'];
+            const dateLabel = `${parseInt(y)}年${parseInt(m)}月${parseInt(d)}日（${dayNames[dt.getDay()]}）`;
+
+            const visitsHtml = visits.map(v => `
+                <div class="panel-day-visit-item">
+                    <div class="visit-items-line">🌸 ${v.items}</div>
+                    ${v.amount ? `<div class="visit-amount-line">¥${v.amount.toLocaleString()}</div>` : ''}
+                    ${v.memo ? `<div class="visit-memo-line">📝 ${v.memo}</div>` : ''}
+                </div>
+            `).join('');
+
+            detailEl.innerHTML = `
+                <div class="panel-day-detail">
+                    <h4>
+                        📅 ${dateLabel}
+                        <button onclick="document.getElementById('panelDayDetail').innerHTML=''">✕</button>
+                    </h4>
+                    ${visitsHtml}
+                </div>
+            `;
+
+            detailEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // 初期レンダリング
+        document.getElementById('sortOrder').value = sortOrder;
+        renderCustomersList();
+        renderVisitsPanel();
+    </script>
+</body>
+</html>
