@@ -1,0 +1,2628 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>顧客台帳管理システム</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Hiragino Sans', 'Yu Gothic', 'Meiryo', sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 40px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .btn-primary {
+            background: white;
+            color: #2c3e50;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1em;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .search-bar {
+            padding: 20px 30px;
+            border-bottom: 2px solid #f0f0f0;
+            background: #f8f9fa;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 12px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .customers-list {
+            width: 350px;
+            border-right: 2px solid #f0f0f0;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+
+        .sort-controls {
+            padding: 10px 15px;
+            background: white;
+            border-bottom: 2px solid #e0e0e0;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .sort-controls select {
+            flex: 1;
+            padding: 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 0.9em;
+        }
+
+        .sort-controls button {
+            padding: 8px 12px;
+            border: none;
+            background: #3498db;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+            white-space: nowrap;
+        }
+
+        .group-header {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .group-header:hover {
+            filter: brightness(1.1);
+        }
+
+        .group-header .group-toggle {
+            transition: transform 0.2s;
+        }
+
+        .group-header.collapsed .group-toggle {
+            transform: rotate(-90deg);
+        }
+
+        .group-content {
+            overflow: hidden;
+            max-height: 50000px;
+            transition: max-height 0.4s ease;
+        }
+
+        .group-content.collapsed {
+            max-height: 0;
+        }
+
+        .customer-item {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .customer-item.dragging {
+            opacity: 0.5;
+        }
+
+        .customer-item.drag-over {
+            border-top: 3px solid #3498db;
+        }
+
+        .customer-item[draggable="true"] {
+            cursor: move;
+        }
+
+        .customer-item:hover {
+            background: #e8f0fe;
+        }
+
+        .customer-item.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .customer-item.unpaid {
+            border-left: 4px solid #e74c3c;
+        }
+
+        .customer-name {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .customer-info-preview {
+            font-size: 0.85em;
+            opacity: 0.8;
+        }
+
+        .details-panel {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 60px 20px;
+        }
+
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .customer-header {
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .customer-title {
+            font-size: 2em;
+            color: #333;
+        }
+
+        .customer-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-secondary {
+            background: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 1em;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            color: #3498db;
+            border-bottom-color: #3498db;
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .info-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .info-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .info-label {
+            font-size: 0.85em;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .info-value {
+            font-size: 1em;
+            color: #333;
+        }
+
+        .payment-record {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #27ae60;
+            margin-bottom: 10px;
+        }
+
+        .payment-record.unpaid {
+            border-left-color: #e74c3c;
+        }
+
+        .payment-date {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .payment-amount {
+            font-size: 1.2em;
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .payment-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .payment-status.paid {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .payment-status.unpaid {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            margin: 20px;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1em;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-actions button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+        }
+
+        .btn-save {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-cancel {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .alert-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            margin-left: 8px;
+            background: #e74c3c;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            .customers-list {
+                width: 100%;
+                max-height: 200px;
+                border-right: none;
+                border-bottom: 2px solid #f0f0f0;
+            }
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏪 顧客台帳管理システム</h1>
+            <div class="header-actions">
+                <button class="btn-primary" onclick="openCustomerModal()">➕ 新規顧客追加</button>
+                <button class="btn-primary" onclick="openGroupModal()">📁 グループ管理</button>
+                <button class="btn-primary" onclick="openSendList()" id="btnSendList">📮 受領書送付リスト</button>
+                <button class="btn-primary" onclick="exportData()">📤 データ書き出し</button>
+                <button class="btn-primary" onclick="document.getElementById('importFile').click()">📥 データ読み込み</button>
+                <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+            </div>
+            <div id="summaryBar" style="display:flex; gap:20px; justify-content:center; margin-top:15px; flex-wrap:wrap;">
+                <div style="background:rgba(255,255,255,0.15); padding:8px 20px; border-radius:10px;">
+                    <span style="font-size:0.85em;">総件数</span>
+                    <span id="totalCount" style="font-size:1.3em; font-weight:bold; margin-left:8px;">0</span><span style="font-size:0.85em;">件</span>
+                </div>
+                <div style="background:rgba(255,255,255,0.15); padding:8px 20px; border-radius:10px;">
+                    <span style="font-size:0.85em;">契約金額合計</span>
+                    <span id="totalContract" style="font-size:1.3em; font-weight:bold; margin-left:8px;">¥0</span>
+                </div>
+                <div style="background:rgba(255,255,255,0.15); padding:8px 20px; border-radius:10px;">
+                    <span style="font-size:0.85em;">供花料合計</span>
+                    <span id="totalFlower" style="font-size:1.3em; font-weight:bold; margin-left:8px;">¥0</span>
+                </div>
+                <div style="background:rgba(255,255,255,0.15); padding:8px 20px; border-radius:10px;">
+                    <span style="font-size:0.85em;">総合計</span>
+                    <span id="grandTotal" style="font-size:1.3em; font-weight:bold; margin-left:8px; color:#f1c40f;">¥0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="🔍 顧客名・墓名・場所で検索..." onkeyup="searchCustomers()">
+        </div>
+
+        <div class="main-content">
+            <div class="customers-list">
+                <div class="sort-controls">
+                    <select id="sortOrder" onchange="changeSortOrder()">
+                        <option value="name">五十音順</option>
+                        <option value="contractType">契約タイプ別</option>
+                        <option value="sales">売上ランキング</option>
+                        <option value="visit">来店回数順</option>
+                        <option value="manual">手動並び替え</option>
+                        <option value="group">グループ表示</option>
+                    </select>
+                </div>
+                <div id="customersList">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👥</div>
+                        <p>顧客がいません</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="details-panel" id="detailsPanel">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📋</div>
+                    <p>左から顧客を選択してください</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 顧客追加/編集モーダル -->
+    <div id="customerModal" class="modal">
+        <div class="modal-content">
+            <h2 id="customerModalTitle">新規顧客追加</h2>
+            <form id="customerForm">
+                <h3 style="margin-bottom: 15px; color: #3498db;">基本情報</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>墓名（家名）*</label>
+                        <input type="text" id="graveName" required placeholder="例: 山田家">
+                    </div>
+                    <div class="form-group">
+                        <label>読みがな（五十音順用）</label>
+                        <input type="text" id="yomi" placeholder="例: やまだ">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>管理者名*</label>
+                        <input type="text" id="managerName" required placeholder="例: 山田太郎">
+                    </div>
+                    <div class="form-group">
+                        <label>管理者名 読みがな</label>
+                        <input type="text" id="managerYomi" placeholder="例: やまだたろう">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>電話番号</label>
+                        <input type="tel" id="phone" placeholder="090-1234-5678">
+                    </div>
+                    <div class="form-group">
+                        <label>メールアドレス</label>
+                        <input type="email" id="email" placeholder="example@email.com">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>住所</label>
+                    <input type="text" id="address" placeholder="鹿児島県...">
+                </div>
+                <div class="form-group">
+                    <label>送付先住所 <span style="font-size:0.8em; color:#999; font-weight:normal;">（住所と異なる場合のみ）</span></label>
+                    <input type="text" id="mailAddress" placeholder="受領書・写真の送り先が別の場合">
+                </div>
+
+                <div class="form-group">
+                    <label>グループ</label>
+                    <select id="customerGroup">
+                        <option value="">なし</option>
+                    </select>
+                </div>
+
+                <h3 style="margin: 25px 0 15px; color: #3498db;">墓地情報</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>霊園・墓地名</label>
+                        <input type="text" id="cemetery" placeholder="〇〇霊園">
+                    </div>
+                    <div class="form-group">
+                        <label>区画番号</label>
+                        <input type="text" id="plotNumber" placeholder="A-123">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>場所・アクセス</label>
+                    <textarea id="location" rows="2" placeholder="霊園内の位置、行き方など"></textarea>
+                </div>
+
+                <h3 style="margin: 25px 0 15px; color: #3498db;">契約情報</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>契約プラン*</label>
+                        <select id="contractPlan" onchange="updateDefaultAmount()">
+                            <option value="annual">年間プラン</option>
+                            <option value="quarterly">年４回プラン</option>
+                            <option value="flower">定期供花プラン</option>
+                            <option value="weeding">草むしりプラン</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>契約金額（円）</label>
+                        <input type="number" id="contractAmount" placeholder="10000">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>供花料（円）</label>
+                        <input type="number" id="flowerFee" placeholder="0" oninput="updateTotalDisplay()">
+                    </div>
+                    <div class="form-group">
+                        <label>総額（円）</label>
+                        <input type="text" id="totalAmount" readonly style="background: #e8f0fe; font-weight: bold; color: #2c3e50;">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>支払いサイクル</label>
+                        <select id="paymentCycle" onchange="updateDefaultAmount()">
+                            <option value="yearly">年払い</option>
+                            <option value="halfyearly">半年払い</option>
+                            <option value="onetime">都度払い</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>1回の支払額（円）</label>
+                        <input type="number" id="perPaymentAmount" placeholder="手入力も可" style="font-weight: bold; color: #2c3e50;" oninput="markPerPaymentManual()">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>契約開始日</label>
+                        <input type="date" id="contractStart">
+                    </div>
+                    <div class="form-group">
+                        <label>前回支払い日付</label>
+                        <input type="date" id="lastPaymentDate">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>支払人</label>
+                        <input type="text" id="payer" placeholder="例: 山田太郎">
+                    </div>
+                    <div class="form-group">
+                        <label>支払い方法</label>
+                        <select id="customerPaymentMethod">
+                            <option value="">未設定</option>
+                            <option value="cash">現金</option>
+                            <option value="transfer">銀行振込</option>
+                            <option value="card">カード</option>
+                            <option value="other">その他</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <div style="font-weight: 600; margin-bottom: 10px; color: #2c3e50;">💰 入金済み期間</div>
+                    <div class="form-row">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>開始月</label>
+                            <input type="month" id="paidPeriodStart" placeholder="例: 2026-01">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>終了月</label>
+                            <input type="month" id="paidPeriodEnd" placeholder="例: 2026-06">
+                        </div>
+                    </div>
+                </div>
+                <div style="background: #fff3e0; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <div style="font-weight: 600; margin-bottom: 10px; color: #2c3e50;">📅 次回入金予定期間</div>
+                    <div class="form-row">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>開始月</label>
+                            <input type="month" id="nextPaymentStart" placeholder="例: 2026-07">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>終了月</label>
+                            <input type="month" id="nextPaymentEnd" placeholder="例: 2026-12">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>契約ステータス</label>
+                        <select id="contractStatus">
+                            <option value="active">有効</option>
+                            <option value="suspended">停止中</option>
+                            <option value="ended">終了</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>備考</label>
+                    <textarea id="contractNotes" rows="2" placeholder="契約の詳細内容など"></textarea>
+                </div>
+
+                <h3 style="margin: 25px 0 15px; color: #3498db;">その他</h3>
+                <div class="form-group">
+                    <label>来店回数</label>
+                    <input type="number" id="visitCount" placeholder="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label>特記事項</label>
+                    <textarea id="notes" rows="3" placeholder="好みの花、アレルギー、その他特別な要望など"></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="submit" class="btn-save">保存</button>
+                    <button type="button" class="btn-cancel" onclick="closeCustomerModal()">キャンセル</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 入金記録追加モーダル -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <h2>入金記録追加</h2>
+            <form id="paymentForm">
+                <div class="form-group">
+                    <label>入金日*</label>
+                    <input type="date" id="paymentDate" required>
+                </div>
+                <div class="form-group">
+                    <label>金額（円）*</label>
+                    <input type="number" id="paymentAmount" required placeholder="10000">
+                </div>
+                <div class="form-group">
+                    <label>支払い方法</label>
+                    <select id="paymentMethod">
+                        <option value="cash">現金</option>
+                        <option value="transfer">銀行振込</option>
+                        <option value="card">カード</option>
+                    </select>
+                </div>
+                <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <div style="font-weight: 600; margin-bottom: 10px; color: #2c3e50;">📅 対象期間</div>
+                    <div class="form-row">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>開始日</label>
+                            <input type="date" id="periodStart">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>終了日</label>
+                            <input type="date" id="periodEnd">
+                        </div>
+                    </div>
+                    <div style="font-size: 0.85em; color: #666; margin-top: 8px;">
+                        例: 2026年7月1日 〜 2026年12月31日
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>メモ</label>
+                    <textarea id="paymentMemo" rows="2"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-save">追加</button>
+                    <button type="button" class="btn-cancel" onclick="closePaymentModal()">キャンセル</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- グループ管理モーダル -->
+    <!-- 受領書送付リストモーダル -->
+    <div id="sendListModal" class="modal">
+        <div class="modal-content" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">📮 受領書送付リスト</h2>
+                <button onclick="closeSendList()" style="background: none; border: none; font-size: 1.5em; cursor: pointer; color: #999;">✕</button>
+            </div>
+            <div id="sendListContent"></div>
+        </div>
+    </div>
+
+    <div id="groupModal" class="modal">
+        <div class="modal-content">
+            <h2>📁 グループ管理</h2>
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <input type="text" id="newGroupName" placeholder="新しいグループ名" style="flex:1; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                <button class="btn-secondary" onclick="addGroup()" style="white-space: nowrap;">追加</button>
+            </div>
+            <div id="groupList"></div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeGroupModal()">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let customers = JSON.parse(localStorage.getItem('customerLedger')) || [];
+        let selectedCustomerId = null;
+        let editingCustomerId = null;
+        let currentTab = 'basic';
+        let groups = JSON.parse(localStorage.getItem('customerGroups')) || [];
+        let sortOrder = localStorage.getItem('ledgerSortOrder') || 'name';
+        let manualOrder = JSON.parse(localStorage.getItem('ledgerManualOrder')) || [];
+        let collapsedGroups = JSON.parse(localStorage.getItem('ledgerCollapsedGroups')) || [];
+
+        function saveData() {
+            localStorage.setItem('customerLedger', JSON.stringify(customers));
+            localStorage.setItem('customerGroups', JSON.stringify(groups));
+            localStorage.setItem('ledgerSortOrder', sortOrder);
+            localStorage.setItem('ledgerManualOrder', JSON.stringify(manualOrder));
+            localStorage.setItem('ledgerCollapsedGroups', JSON.stringify(collapsedGroups));
+            updateSummary();
+        }
+
+        function exportData() {
+            const data = {
+                customers: customers,
+                groups: groups,
+                sortOrder: sortOrder,
+                manualOrder: manualOrder,
+                exportedAt: new Date().toISOString()
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const date = new Date().toISOString().slice(0, 10);
+            a.href = url;
+            a.download = '顧客台帳_' + date + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!data.customers) { alert('ファイルの形式が正しくありません'); return; }
+                    if (!confirm(`${data.customers.length}件のデータを読み込みます。現在のデータは上書きされます。よろしいですか？`)) return;
+                    customers = data.customers;
+                    if (data.groups) groups = data.groups;
+                    if (data.manualOrder) manualOrder = data.manualOrder;
+                    saveData();
+                    renderCustomersList();
+                    renderDetailsPanel();
+                    alert('読み込み完了しました');
+                } catch(err) {
+                    alert('読み込みエラー: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function updateSummary() {
+            const count = customers.length;
+            const contractSum = customers.reduce((s, c) => s + (c.contractAmount || 0), 0);
+            const flowerSum = customers.reduce((s, c) => s + (c.flowerFee || 0), 0);
+            document.getElementById('totalCount').textContent = count;
+            document.getElementById('totalContract').textContent = '¥' + contractSum.toLocaleString();
+            document.getElementById('totalFlower').textContent = '¥' + flowerSum.toLocaleString();
+            document.getElementById('grandTotal').textContent = '¥' + (contractSum + flowerSum).toLocaleString();
+        }
+
+        function changeSortOrder() {
+            sortOrder = document.getElementById('sortOrder').value;
+            localStorage.setItem('ledgerSortOrder', sortOrder);
+            renderCustomersList();
+        }
+
+        function renderCustomerItem(customer, isDraggable) {
+            const hasUnpaid = customer.payments && customer.payments.some(p => p.status === 'unpaid');
+            return `
+                <div class="customer-item ${selectedCustomerId === customer.id ? 'active' : ''} ${hasUnpaid ? 'unpaid' : ''}"
+                     data-customer-id="${customer.id}"
+                     ${isDraggable ? 'draggable="true"' : ''}
+                     onclick="selectCustomer(${customer.id})">
+                    <div class="customer-name">
+                        ${customer.graveName}
+                        ${hasUnpaid ? '<span class="alert-badge">未払</span>' : ''}
+                    </div>
+                    <div class="customer-info-preview">
+                        👤 ${customer.managerName}<br>
+                        📍 ${customer.cemetery || '未設定'}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCustomersList() {
+            const list = document.getElementById('customersList');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+            const filteredCustomers = customers.filter(c =>
+                c.graveName.toLowerCase().includes(searchTerm) ||
+                (c.yomi && c.yomi.toLowerCase().includes(searchTerm)) ||
+                c.managerName.toLowerCase().includes(searchTerm) ||
+                (c.managerYomi && c.managerYomi.toLowerCase().includes(searchTerm)) ||
+                (c.cemetery && c.cemetery.toLowerCase().includes(searchTerm)) ||
+                (c.location && c.location.toLowerCase().includes(searchTerm))
+            );
+
+            if (filteredCustomers.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👥</div>
+                        <p>${searchTerm ? '該当する顧客がいません' : '顧客がいません'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const isDraggable = sortOrder === 'manual';
+
+            if (sortOrder === 'name') {
+                // 五十音行ごとにグループ表示
+                const gyouMap = [
+                    { key: 'ア行', test: /^[ぁ-おァ-オa-eA-E]/ },
+                    { key: 'カ行', test: /^[か-ごカ-ゴ]/ },
+                    { key: 'サ行', test: /^[さ-ぞサ-ゾ]/ },
+                    { key: 'タ行', test: /^[た-どタ-ド]/ },
+                    { key: 'ナ行', test: /^[な-のナ-ノ]/ },
+                    { key: 'ハ行', test: /^[は-ぽハ-ポ]/ },
+                    { key: 'マ行', test: /^[ま-もマ-モ]/ },
+                    { key: 'ヤ行', test: /^[や-よヤ-ヨ]/ },
+                    { key: 'ラ行', test: /^[ら-ろラ-ロ]/ },
+                    { key: 'ワ行', test: /^[わ-んワ-ン]/ },
+                ];
+                function getGyou(c) {
+                    const y = (c.yomi || c.graveName).toLowerCase();
+                    for (const g of gyouMap) {
+                        if (g.test.test(y)) return g.key;
+                    }
+                    return 'その他';
+                }
+                // グループごとに分類
+                const grouped = {};
+                filteredCustomers.forEach(c => {
+                    const g = getGyou(c);
+                    if (!grouped[g]) grouped[g] = [];
+                    grouped[g].push(c);
+                });
+                // 各グループ内を五十音順にソート
+                Object.values(grouped).forEach(arr => {
+                    arr.sort((a, b) => (a.yomi || a.graveName).localeCompare((b.yomi || b.graveName), 'ja'));
+                });
+                // 表示順序
+                const gyouOrder = gyouMap.map(g => g.key).concat(['その他']);
+                let html = '';
+                gyouOrder.forEach(gKey => {
+                    const members = grouped[gKey];
+                    if (!members || members.length === 0) return;
+                    const isCollapsed = collapsedGroups.includes('gyou_' + gKey);
+                    html += `
+                        <div class="group-header ${isCollapsed ? 'collapsed' : ''}" onclick="toggleGroup('gyou_${gKey}')">
+                            <span>${gKey}（${members.length}件）</span>
+                            <span class="group-toggle">▼</span>
+                        </div>
+                        <div class="group-content ${isCollapsed ? 'collapsed' : ''}">
+                            ${members.map(c => renderCustomerItem(c, false)).join('')}
+                        </div>
+                    `;
+                });
+                list.innerHTML = html;
+            } else if (sortOrder === 'contractType') {
+                const typeMap = [
+                    { key: 'annual', label: '年間契約', icon: '📋' },
+                    { key: 'quarterly', label: '年４回プラン', icon: '🗓' },
+                    { key: 'flower', label: '定期供花', icon: '💐' },
+                    { key: 'weeding', label: '草むしり', icon: '🌿' },
+                    { key: '_none', label: '未設定', icon: '📂' },
+                ];
+                const grouped = {};
+                filteredCustomers.forEach(c => {
+                    const t = c.contractPlan || '_none';
+                    if (!grouped[t]) grouped[t] = [];
+                    grouped[t].push(c);
+                });
+                Object.values(grouped).forEach(arr => {
+                    arr.sort((a, b) => (a.yomi || a.graveName).localeCompare((b.yomi || b.graveName), 'ja'));
+                });
+                let html = '';
+                typeMap.forEach(t => {
+                    const members = grouped[t.key];
+                    if (!members || members.length === 0) return;
+                    const isCollapsed = collapsedGroups.includes('ct_' + t.key);
+                    html += `
+                        <div class="group-header ${isCollapsed ? 'collapsed' : ''}" onclick="toggleGroup('ct_${t.key}')">
+                            <span>${t.icon} ${t.label}（${members.length}件）</span>
+                            <span class="group-toggle">▼</span>
+                        </div>
+                        <div class="group-content ${isCollapsed ? 'collapsed' : ''}">
+                            ${members.map(c => renderCustomerItem(c, false)).join('')}
+                        </div>
+                    `;
+                });
+                list.innerHTML = html;
+            } else if (sortOrder === 'group') {
+                // グループ表示
+                let html = '';
+                groups.forEach(group => {
+                    const groupCustomers = filteredCustomers.filter(c => c.group === group.id);
+                    if (groupCustomers.length === 0) return;
+                    const isCollapsed = collapsedGroups.includes(group.id);
+                    html += `
+                        <div class="group-header ${isCollapsed ? 'collapsed' : ''}" onclick="toggleGroup('${group.id}')">
+                            <span>📁 ${group.name}（${groupCustomers.length}件）</span>
+                            <span class="group-toggle">▼</span>
+                        </div>
+                        <div class="group-content ${isCollapsed ? 'collapsed' : ''}">
+                            ${groupCustomers.sort((a, b) => (a.yomi || a.graveName).localeCompare((b.yomi || b.graveName), 'ja')).map(c => renderCustomerItem(c, false)).join('')}
+                        </div>
+                    `;
+                });
+                // グループ未設定の顧客
+                const ungrouped = filteredCustomers.filter(c => !c.group || !groups.find(g => g.id === c.group));
+                if (ungrouped.length > 0) {
+                    const isCollapsed = collapsedGroups.includes('_ungrouped');
+                    html += `
+                        <div class="group-header ${isCollapsed ? 'collapsed' : ''}" style="background: #95a5a6;" onclick="toggleGroup('_ungrouped')">
+                            <span>📂 未分類（${ungrouped.length}件）</span>
+                            <span class="group-toggle">▼</span>
+                        </div>
+                        <div class="group-content ${isCollapsed ? 'collapsed' : ''}">
+                            ${ungrouped.sort((a, b) => (a.yomi || a.graveName).localeCompare((b.yomi || b.graveName), 'ja')).map(c => renderCustomerItem(c, false)).join('')}
+                        </div>
+                    `;
+                }
+                list.innerHTML = html;
+            } else if (sortOrder === 'sales') {
+                const sorted = [...filteredCustomers].sort((a, b) => {
+                    const aTotal = (a.contractAmount || 0) + (a.flowerFee || 0);
+                    const bTotal = (b.contractAmount || 0) + (b.flowerFee || 0);
+                    return bTotal - aTotal;
+                });
+                list.innerHTML = sorted.map((c, i) => {
+                    const total = (c.contractAmount || 0) + (c.flowerFee || 0);
+                    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`;
+                    return `<div style="display:flex; align-items:center; gap:6px; padding: 2px 8px; background:#f9f9f9; border-bottom:1px solid #eee; font-size:0.8em; color:#888;">${medal} ¥${total.toLocaleString()}/年</div>` + renderCustomerItem(c, false);
+                }).join('');
+            } else if (sortOrder === 'visit') {
+                const sorted = [...filteredCustomers].sort((a, b) => {
+                    return (b.visitCount || 0) - (a.visitCount || 0);
+                });
+                list.innerHTML = sorted.map((c, i) => {
+                    const cnt = c.visitCount || 0;
+                    return `<div style="display:flex; align-items:center; gap:6px; padding: 2px 8px; background:#f9f9f9; border-bottom:1px solid #eee; font-size:0.8em; color:#888;">${i+1}. 来店 ${cnt}回</div>` + renderCustomerItem(c, false);
+                }).join('');
+            } else if (sortOrder === 'manual') {
+                const sorted = [...filteredCustomers].sort((a, b) => {
+                    const ai = manualOrder.indexOf(a.id);
+                    const bi = manualOrder.indexOf(b.id);
+                    if (ai === -1 && bi === -1) return 0;
+                    if (ai === -1) return 1;
+                    if (bi === -1) return -1;
+                    return ai - bi;
+                });
+                list.innerHTML = sorted.map(c => renderCustomerItem(c, true)).join('');
+                setupDragDrop(list);
+            }
+        }
+
+        function toggleGroup(groupId) {
+            const idx = collapsedGroups.indexOf(groupId);
+            if (idx === -1) {
+                collapsedGroups.push(groupId);
+            } else {
+                collapsedGroups.splice(idx, 1);
+            }
+            localStorage.setItem('ledgerCollapsedGroups', JSON.stringify(collapsedGroups));
+            renderCustomersList();
+        }
+
+        // ドラッグ&ドロップ
+        let draggedEl = null;
+
+        function setupDragDrop(list) {
+            const items = list.querySelectorAll('.customer-item');
+            items.forEach(item => {
+                item.addEventListener('dragstart', function(e) {
+                    draggedEl = this;
+                    this.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                item.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    this.classList.add('drag-over');
+                });
+                item.addEventListener('dragleave', function() {
+                    this.classList.remove('drag-over');
+                });
+                item.addEventListener('drop', function(e) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    this.classList.remove('drag-over');
+                    if (draggedEl !== this) {
+                        const allItems = Array.from(list.querySelectorAll('.customer-item'));
+                        const dragIdx = allItems.indexOf(draggedEl);
+                        const targetIdx = allItems.indexOf(this);
+                        const currentOrder = allItems.map(el => parseInt(el.dataset.customerId));
+                        const moved = currentOrder.splice(dragIdx, 1)[0];
+                        currentOrder.splice(targetIdx, 0, moved);
+                        manualOrder = currentOrder;
+                        localStorage.setItem('ledgerManualOrder', JSON.stringify(manualOrder));
+                        renderCustomersList();
+                    }
+                });
+                item.addEventListener('dragend', function() {
+                    this.classList.remove('dragging');
+                    list.querySelectorAll('.customer-item').forEach(el => el.classList.remove('drag-over'));
+                });
+            });
+        }
+
+        // グループ管理
+        function openGroupModal() {
+            renderGroupList();
+            document.getElementById('groupModal').classList.add('active');
+        }
+
+        function closeGroupModal() {
+            document.getElementById('groupModal').classList.remove('active');
+        }
+
+        function addGroup() {
+            const name = document.getElementById('newGroupName').value.trim();
+            if (!name) return;
+            groups.push({ id: 'g_' + Date.now(), name: name });
+            document.getElementById('newGroupName').value = '';
+            saveData();
+            renderGroupList();
+            updateGroupSelects();
+        }
+
+        function deleteGroup(groupId) {
+            if (!confirm('このグループを削除しますか？（顧客は削除されません）')) return;
+            groups = groups.filter(g => g.id !== groupId);
+            customers.forEach(c => { if (c.group === groupId) c.group = ''; });
+            saveData();
+            renderGroupList();
+            updateGroupSelects();
+            renderCustomersList();
+        }
+
+        function renderGroupList() {
+            const container = document.getElementById('groupList');
+            if (groups.length === 0) {
+                container.innerHTML = '<p style="color: #999; text-align: center;">グループがありません</p>';
+                return;
+            }
+            container.innerHTML = groups.map(g => {
+                const count = customers.filter(c => c.group === g.id).length;
+                return `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8f9fa; border-radius: 8px; margin-bottom: 8px;">
+                        <span style="font-weight: 600;">📁 ${g.name}（${count}件）</span>
+                        <button class="btn-danger" style="padding: 6px 12px; font-size: 0.85em;" onclick="deleteGroup('${g.id}')">削除</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateGroupSelects() {
+            const select = document.getElementById('customerGroup');
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">なし</option>' + groups.map(g =>
+                `<option value="${g.id}">${g.name}</option>`
+            ).join('');
+            select.value = currentVal;
+        }
+
+        function selectCustomer(customerId) {
+            selectedCustomerId = customerId;
+            currentTab = 'basic';
+            renderCustomersList();
+            renderDetailsPanel();
+        }
+
+        function searchCustomers() {
+            renderCustomersList();
+        }
+
+        function renderDetailsPanel() {
+            const panel = document.getElementById('detailsPanel');
+            const customer = customers.find(c => c.id === selectedCustomerId);
+
+            if (!customer) {
+                panel.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <p>左から顧客を選択してください</p>
+                    </div>
+                `;
+                return;
+            }
+
+            panel.innerHTML = `
+                <div class="customer-header">
+                    <div class="customer-title">${customer.graveName}</div>
+                    <div class="customer-actions">
+                        <button class="btn-secondary" onclick="editCustomer(${customer.id})">✏️ 編集</button>
+                        <button class="btn-danger" onclick="deleteCustomer(${customer.id})">削除</button>
+                    </div>
+                </div>
+
+                <div class="tabs">
+                    <button class="tab ${currentTab === 'basic' ? 'active' : ''}" onclick="switchTab('basic')">基本情報</button>
+                    <button class="tab ${currentTab === 'contract' ? 'active' : ''}" onclick="switchTab('contract')">契約・入金</button>
+                </div>
+
+                <div class="tab-content ${currentTab === 'basic' ? 'active' : ''}" id="basicTab">
+                    ${renderBasicInfo(customer)}
+                </div>
+
+                <div class="tab-content ${currentTab === 'contract' ? 'active' : ''}" id="contractTab">
+                    ${renderContractInfo(customer)}
+                </div>
+            `;
+        }
+
+        function renderBasicInfo(customer) {
+            return `
+                <div class="info-section">
+                    <h3>連絡先情報</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">管理者名</span>
+                            <span class="info-value">${customer.managerName}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">電話番号</span>
+                            <span class="info-value">${customer.phone || '未設定'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">メールアドレス</span>
+                            <span class="info-value">${customer.email || '未設定'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">住所</span>
+                            <span class="info-value">${customer.address || '未設定'}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <h3>墓地情報</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">霊園・墓地名</span>
+                            <span class="info-value">${customer.cemetery || '未設定'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">区画番号</span>
+                            <span class="info-value">${customer.plotNumber || '未設定'}</span>
+                        </div>
+                    </div>
+                    ${customer.location ? `
+                        <div class="info-item" style="margin-top: 15px;">
+                            <span class="info-label">場所・アクセス</span>
+                            <span class="info-value">${customer.location}</span>
+                        </div>
+                    ` : ''}
+                </div>
+
+                ${customer.notes ? `
+                    <div class="info-section">
+                        <h3>特記事項</h3>
+                        <p style="white-space: pre-wrap;">${customer.notes}</p>
+                    </div>
+                ` : ''}
+            `;
+        }
+
+        function renderContractInfo(customer) {
+            const payments = customer.payments || [];
+            const totalPaid = payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0);
+            const unpaidCount = payments.filter(p => p.status === 'unpaid').length;
+
+            return `
+                <div class="info-section">
+                    <h3>契約情報</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">契約プラン</span>
+                            <span class="info-value">${getContractPlanText(customer.contractPlan)}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">契約金額</span>
+                            <span class="info-value">${customer.contractAmount ? '¥' + customer.contractAmount.toLocaleString() : '未設定'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">供花料</span>
+                            <span class="info-value">${customer.flowerFee ? '¥' + customer.flowerFee.toLocaleString() : 'なし'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">総額</span>
+                            <span class="info-value" style="font-weight: bold; color: #2c3e50;">¥${((customer.contractAmount || 0) + (customer.flowerFee || 0)).toLocaleString()}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">支払いサイクル</span>
+                            <span class="info-value">${getPaymentCycleText(customer.paymentCycle)}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">1回の支払額</span>
+                            <span class="info-value" style="font-weight: bold;">¥${(customer.perPaymentAmount || ((customer.contractAmount || 0) + (customer.flowerFee || 0))).toLocaleString()}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">契約開始日</span>
+                            <span class="info-value">${customer.contractStart ? new Date(customer.contractStart).toLocaleDateString('ja-JP') : '未設定'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">前回支払い日付</span>
+                            <span class="info-value">${customer.lastPaymentDate ? new Date(customer.lastPaymentDate).toLocaleDateString('ja-JP') : '未設定'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">支払人</span>
+                            <span class="info-value">${customer.payer || '未設定'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">支払い方法</span>
+                            <span class="info-value">${getPaymentMethodText(customer.customerPaymentMethod) || '未設定'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">契約ステータス</span>
+                            <span class="info-value">${getContractStatusText(customer.contractStatus)}</span>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                        <div style="background: #d4edda; padding: 15px; border-radius: 8px;">
+                            <div style="font-size: 0.85em; color: #155724; margin-bottom: 5px;">💰 入金済み期間</div>
+                            <div style="font-weight: 600; color: #155724;">${formatMonthPeriod(customer.paidPeriodStart, customer.paidPeriodEnd)}</div>
+                        </div>
+                        <div style="background: #fff3cd; padding: 15px; border-radius: 8px;">
+                            <div style="font-size: 0.85em; color: #856404; margin-bottom: 5px;">📅 次回入金予定期間</div>
+                            <div style="font-weight: 600; color: #856404;">${formatMonthPeriod(customer.nextPaymentStart, customer.nextPaymentEnd)}</div>
+                        </div>
+                    </div>
+                    <div style="display: none;">
+                        <div class="info-item">
+                            <span class="info-label">契約ステータス</span>
+                            <span class="info-value">${getContractStatusText(customer.contractStatus)}</span>
+                        </div>
+                    </div>
+                    ${customer.contractNotes ? `
+                        <div class="info-item" style="margin-top: 15px;">
+                            <span class="info-label">備考</span>
+                            <span class="info-value">${customer.contractNotes}</span>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <div class="info-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="margin: 0;">入金記録</h3>
+                        <button class="btn-secondary" onclick="openPaymentModal()">➕ 入金追加</button>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                        <div style="background: #d4edda; padding: 15px; border-radius: 8px;">
+                            <div style="font-size: 0.85em; color: #155724;">総入金額</div>
+                            <div style="font-size: 1.5em; font-weight: bold; color: #155724;">¥${totalPaid.toLocaleString()}</div>
+                        </div>
+                        <div style="background: ${unpaidCount > 0 ? '#f8d7da' : '#d1ecf1'}; padding: 15px; border-radius: 8px;">
+                            <div style="font-size: 0.85em; color: ${unpaidCount > 0 ? '#721c24' : '#0c5460'};">未払い件数</div>
+                            <div style="font-size: 1.5em; font-weight: bold; color: ${unpaidCount > 0 ? '#721c24' : '#0c5460'};">${unpaidCount}件</div>
+                        </div>
+                    </div>
+                    ${payments.length > 0 ? payments.map(payment => `
+                        <div class="payment-record ${payment.status}">
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div>
+                                    <div class="payment-date">${new Date(payment.date).toLocaleDateString('ja-JP')}</div>
+                                    <div class="payment-amount">¥${payment.amount.toLocaleString()}</div>
+                                    ${payment.periodText ? `<div style="font-size: 0.9em; color: #666; margin-top: 5px;">📅 ${payment.periodText}</div>` : ''}
+                                    ${payment.memo ? `<div style="font-size: 0.85em; color: #888; margin-top: 5px;">${payment.memo}</div>` : ''}
+                                </div>
+                                <div style="text-align: right;">
+                                    <span class="payment-status ${payment.status}">${payment.status === 'paid' ? '入金済' : '未払い'}</span>
+                                    <div style="font-size: 0.85em; color: #666; margin-top: 5px;">${getPaymentMethodText(payment.method)}</div>
+                                    <div style="margin-top: 8px; display: flex; gap: 5px; justify-content: flex-end;">
+                                        <button onclick="editPayment(${payment.id})" style="padding: 4px 10px; font-size: 0.8em; border: 1px solid #3498db; background: white; color: #3498db; border-radius: 5px; cursor: pointer;">編集</button>
+                                        <button onclick="deletePayment(${payment.id})" style="padding: 4px 10px; font-size: 0.8em; border: 1px solid #e74c3c; background: white; color: #e74c3c; border-radius: 5px; cursor: pointer;">削除</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('') : '<p style="color: #999; text-align: center; padding: 20px;">入金記録がありません</p>'}
+                </div>
+
+                <div style="margin-top: 15px; padding: 15px; border-top: 1px solid #e0e0e0;">
+                    <div style="font-size: 0.85em; color: #999; margin-bottom: 10px;">チェックリスト</div>
+                    ${customer.mailAddress || customer.address ? `<div style="font-size: 0.82em; color: #888; margin-bottom: 10px; padding: 6px 10px; background: #f8f8f8; border-radius: 6px;">📮 送付先：${customer.mailAddress || customer.address}</div>` : ''}
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.95em; color: #555; margin-bottom: 6px;">
+                        <input type="checkbox" ${customer.photoTaken ? 'checked' : ''} onchange="togglePhotoTaken(${customer.id}, this.checked)" style="width: 16px; height: 16px; cursor: pointer;">
+                        近影写真撮影${customer.paidPeriodStart && customer.paidPeriodEnd ? '（' + formatMonthPeriod(customer.paidPeriodStart, customer.paidPeriodEnd) + '分）' : ''}
+                    </label>
+                    ${customer.photoTakenDate ? '<div style="font-size: 0.8em; color: #aaa; margin-bottom: 8px; padding-left: 24px;">' + new Date(customer.photoTakenDate).toLocaleDateString('ja-JP') + ' 撮影</div>' : ''}
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.95em; color: #555;">
+                        <input type="checkbox" ${customer.receiptSent ? 'checked' : ''} onchange="toggleReceipt(${customer.id}, this.checked)" style="width: 16px; height: 16px; cursor: pointer;">
+                        受領書・写真送付${customer.paidPeriodStart && customer.paidPeriodEnd ? '（' + formatMonthPeriod(customer.paidPeriodStart, customer.paidPeriodEnd) + '分）' : ''}
+                    </label>
+                    ${customer.receiptSentDate ? '<div style="font-size: 0.8em; color: #aaa; margin-top: 4px; padding-left: 24px;">' + new Date(customer.receiptSentDate).toLocaleDateString('ja-JP') + ' 送付</div>' : ''}
+                </div>
+            `;
+        }
+
+        function getContractPlanText(plan) {
+            const map = {
+                annual: '年間プラン',
+                quarterly: '年４回プラン',
+                flower: '定期供花プラン',
+                weeding: '草むしりプラン'
+            };
+            return map[plan] || '未設定';
+        }
+
+        function getPaymentCycleText(cycle) {
+            const map = {
+                onetime: '都度払い',
+                yearly: '年払い',
+                halfyearly: '半年払い'
+            };
+            return map[cycle] || '未設定';
+        }
+
+        function toggleReceipt(customerId, checked) {
+            const customer = customers.find(c => c.id === customerId);
+            if (customer) {
+                customer.receiptSent = checked;
+                customer.receiptSentDate = checked ? new Date().toISOString() : '';
+                customer.receiptSentPeriod = checked ? (customer.paidPeriodStart + '_' + customer.paidPeriodEnd) : '';
+                saveData();
+                renderDetailsPanel();
+            }
+        }
+
+        function togglePhotoTaken(customerId, checked) {
+            const customer = customers.find(c => c.id === customerId);
+            if (customer) {
+                customer.photoTaken = checked;
+                customer.photoTakenDate = checked ? new Date().toISOString() : '';
+                customer.photoTakenPeriod = checked ? (customer.paidPeriodStart + '_' + customer.paidPeriodEnd) : '';
+                saveData();
+                renderDetailsPanel();
+            }
+        }
+
+        function openSendList() {
+            renderSendList();
+            document.getElementById('sendListModal').classList.add('active');
+        }
+
+        function closeSendList() {
+            document.getElementById('sendListModal').classList.remove('active');
+        }
+
+        function renderSendList() {
+            // 入金期間が設定されていて、撮影か送付がまだの顧客
+            const pending = customers.filter(c => c.paidPeriodStart && c.paidPeriodEnd);
+            const needsAction = pending.filter(c => !c.photoTaken || !c.receiptSent);
+            const done = pending.filter(c => c.photoTaken && c.receiptSent);
+
+            function row(c) {
+                const period = formatMonthPeriod(c.paidPeriodStart, c.paidPeriodEnd);
+                const mailTo = c.mailAddress || c.address || '（送付先未設定）';
+                // 入金日を payments から取得（periodStartは日付形式 or 月形式どちらでも対応）
+                const matchPayment = (c.payments || []).find(p =>
+                    p.periodStart && p.periodStart.startsWith(c.paidPeriodStart) &&
+                    p.periodEnd && p.periodEnd.startsWith(c.paidPeriodEnd)
+                ) || (c.payments && c.payments[0]);
+                const paidDateRaw = (matchPayment && matchPayment.date) || c.lastPaymentDate || '';
+                const paidDateStr = paidDateRaw
+                    ? '💴 入金日：' + paidDateRaw.replace(/-/g, '/')
+                    : '';
+                return `
+                    <div style="padding: 14px; border: 1px solid #e0e0e0; border-radius: 10px; margin-bottom: 10px; background: ${c.photoTaken && c.receiptSent ? '#f9f9f9' : 'white'};">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <div>
+                                <span style="font-weight: bold; font-size: 1.05em;">${c.graveName}</span>
+                                <span style="font-size: 0.85em; color: #555; margin-left: 8px;">👤 ${c.payer || c.managerName}</span>
+                                <span style="font-size: 0.85em; color: #888; margin-left: 8px;">${period}</span>
+                                ${paidDateStr ? `<span style="font-size: 0.85em; color: #27ae60; margin-left: 8px;">${paidDateStr}</span>` : ''}
+                            </div>
+                        </div>
+                        <div style="font-size: 0.85em; color: #666; margin-bottom: 10px;">📮 ${mailTo}</div>
+                        <div style="display: flex; gap: 20px;">
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.9em; color: #555;">
+                                <input type="checkbox" ${c.photoTaken ? 'checked' : ''} onchange="togglePhotoTakenAndRefresh(${c.id}, this.checked)" style="width:15px; height:15px;">
+                                📷 近影撮影
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.9em; color: #555;">
+                                <input type="checkbox" ${c.receiptSent ? 'checked' : ''} onchange="toggleReceiptAndRefresh(${c.id}, this.checked)" style="width:15px; height:15px;">
+                                ✉️ 受領書・写真送付
+                            </label>
+                        </div>
+                    </div>
+                `;
+            }
+
+            let html = '';
+            if (needsAction.length > 0) {
+                html += `<div style="font-size: 0.85em; color: #888; margin-bottom: 10px;">${needsAction.length}件</div>`;
+                html += needsAction.sort((a,b) => (a.yomi||a.graveName).localeCompare(b.yomi||b.graveName, 'ja')).map(row).join('');
+            } else {
+                html = '<div style="color: #27ae60; text-align: center; padding: 40px; font-size: 1.1em;">✅ すべて完了</div>';
+            }
+            document.getElementById('sendListContent').innerHTML = html;
+        }
+
+        function togglePhotoTakenAndRefresh(customerId, checked) {
+            const customer = customers.find(c => c.id === customerId);
+            if (customer) {
+                customer.photoTaken = checked;
+                customer.photoTakenDate = checked ? new Date().toISOString() : '';
+                customer.photoTakenPeriod = checked ? (customer.paidPeriodStart + '_' + customer.paidPeriodEnd) : '';
+                saveData();
+                renderSendList();
+                updateSendListBadge();
+            }
+        }
+
+        function toggleReceiptAndRefresh(customerId, checked) {
+            const customer = customers.find(c => c.id === customerId);
+            if (customer) {
+                customer.receiptSent = checked;
+                customer.receiptSentDate = checked ? new Date().toISOString() : '';
+                customer.receiptSentPeriod = checked ? (customer.paidPeriodStart + '_' + customer.paidPeriodEnd) : '';
+                saveData();
+                renderSendList();
+                updateSendListBadge();
+            }
+        }
+
+        function updateSendListBadge() {
+            const count = customers.filter(c => c.paidPeriodStart && c.paidPeriodEnd && (!c.photoTaken || !c.receiptSent)).length;
+            const btn = document.getElementById('btnSendList');
+            btn.textContent = count > 0 ? `📮 受領書送付リスト（${count}）` : '📮 受領書送付リスト';
+        }
+
+        document.getElementById('sendListModal').addEventListener('click', function(e) {
+            if (e.target === this) closeSendList();
+        });
+
+        function getContractStatusText(status) {
+            const map = { active: '有効', suspended: '停止中', ended: '終了' };
+            return map[status] || '未設定';
+        }
+
+        function getPaymentMethodText(method) {
+            const map = { cash: '現金', transfer: '銀行振込', card: 'カード', other: 'その他' };
+            return map[method] || '';
+        }
+
+        function formatMonthPeriod(start, end) {
+            if (!start || !end) return '未設定';
+            const [startYear, startMonth] = start.split('-');
+            const [endYear, endMonth] = end.split('-');
+            return `${startYear}年${parseInt(startMonth)}月 〜 ${endYear}年${parseInt(endMonth)}月`;
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            renderDetailsPanel();
+        }
+
+        function openCustomerModal() {
+            editingCustomerId = null;
+            perPaymentManual = false;
+            document.getElementById('customerModalTitle').textContent = '新規顧客追加';
+            document.getElementById('customerForm').reset();
+            document.getElementById('paymentCycle').value = 'yearly';
+            document.getElementById('contractAmount').value = 33000;
+            updateDefaultAmount();
+            updateGroupSelects();
+            document.getElementById('customerModal').classList.add('active');
+        }
+
+        function editCustomer(customerId) {
+            editingCustomerId = customerId;
+            const customer = customers.find(c => c.id === customerId);
+
+            document.getElementById('customerModalTitle').textContent = '顧客情報編集';
+            document.getElementById('graveName').value = customer.graveName;
+            document.getElementById('yomi').value = customer.yomi || '';
+            document.getElementById('managerName').value = customer.managerName;
+            document.getElementById('managerYomi').value = customer.managerYomi || '';
+            document.getElementById('phone').value = customer.phone || '';
+            document.getElementById('email').value = customer.email || '';
+            document.getElementById('address').value = customer.address || '';
+            document.getElementById('mailAddress').value = customer.mailAddress || '';
+            document.getElementById('cemetery').value = customer.cemetery || '';
+            document.getElementById('plotNumber').value = customer.plotNumber || '';
+            document.getElementById('location').value = customer.location || '';
+            document.getElementById('contractPlan').value = customer.contractPlan || 'annual';
+            document.getElementById('contractAmount').value = customer.contractAmount || '';
+            document.getElementById('flowerFee').value = customer.flowerFee || '';
+            document.getElementById('contractStart').value = customer.contractStart || '';
+            document.getElementById('paymentCycle').value = customer.paymentCycle || 'onetime';
+            // 保存済みの1回支払額があればそれを使う
+            perPaymentManual = false;
+            updateTotalDisplay();
+            if (customer.perPaymentAmount) {
+                document.getElementById('perPaymentAmount').value = customer.perPaymentAmount;
+                perPaymentManual = true;
+            }
+            document.getElementById('paidPeriodStart').value = customer.paidPeriodStart || '';
+            document.getElementById('paidPeriodEnd').value = customer.paidPeriodEnd || '';
+            document.getElementById('nextPaymentStart').value = customer.nextPaymentStart || '';
+            document.getElementById('nextPaymentEnd').value = customer.nextPaymentEnd || '';
+            document.getElementById('lastPaymentDate').value = customer.lastPaymentDate || '';
+            document.getElementById('payer').value = customer.payer || '';
+            document.getElementById('customerPaymentMethod').value = customer.customerPaymentMethod || '';
+            document.getElementById('contractStatus').value = customer.contractStatus || 'active';
+            document.getElementById('contractNotes').value = customer.contractNotes || '';
+            document.getElementById('visitCount').value = customer.visitCount || '';
+            document.getElementById('notes').value = customer.notes || '';
+            updateGroupSelects();
+            document.getElementById('customerGroup').value = customer.group || '';
+
+            document.getElementById('customerModal').classList.add('active');
+        }
+
+        function closeCustomerModal() {
+            document.getElementById('customerModal').classList.remove('active');
+        }
+
+        function deleteCustomer(customerId) {
+            const customer = customers.find(c => c.id === customerId);
+            if (!confirm(`${customer.graveName}を削除しますか？\nすべての記録も削除されます。`)) return;
+
+            customers = customers.filter(c => c.id !== customerId);
+            selectedCustomerId = null;
+            saveData();
+            renderCustomersList();
+            renderDetailsPanel();
+        }
+
+        let editingPaymentId = null;
+
+        function openPaymentModal() {
+            editingPaymentId = null;
+            document.getElementById('paymentForm').reset();
+            document.getElementById('paymentDate').valueAsDate = new Date();
+            document.getElementById('paymentModal').querySelector('h2').textContent = '入金記録追加';
+            document.getElementById('paymentModal').querySelector('.btn-save').textContent = '追加';
+            document.getElementById('paymentModal').classList.add('active');
+        }
+
+        function editPayment(paymentId) {
+            const customer = customers.find(c => c.id === selectedCustomerId);
+            const payment = customer.payments.find(p => p.id === paymentId);
+            if (!payment) return;
+
+            editingPaymentId = paymentId;
+            document.getElementById('paymentDate').value = payment.date;
+            document.getElementById('paymentAmount').value = payment.amount;
+            document.getElementById('paymentMethod').value = payment.method || 'cash';
+            document.getElementById('periodStart').value = payment.periodStart || '';
+            document.getElementById('periodEnd').value = payment.periodEnd || '';
+            document.getElementById('paymentMemo').value = payment.memo || '';
+            document.getElementById('paymentModal').querySelector('h2').textContent = '入金記録編集';
+            document.getElementById('paymentModal').querySelector('.btn-save').textContent = '保存';
+            document.getElementById('paymentModal').classList.add('active');
+        }
+
+        function deletePayment(paymentId) {
+            if (!confirm('この入金記録を削除しますか？')) return;
+            const customer = customers.find(c => c.id === selectedCustomerId);
+            customer.payments = customer.payments.filter(p => p.id !== paymentId);
+            saveData();
+            renderDetailsPanel();
+            renderCustomersList();
+        }
+
+        function closePaymentModal() {
+            editingPaymentId = null;
+            document.getElementById('paymentModal').classList.remove('active');
+        }
+
+        document.getElementById('customerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const customerData = {
+                graveName: document.getElementById('graveName').value.trim(),
+                yomi: document.getElementById('yomi').value.trim(),
+                managerName: document.getElementById('managerName').value,
+                managerYomi: document.getElementById('managerYomi').value.trim(),
+                phone: document.getElementById('phone').value,
+                email: document.getElementById('email').value,
+                address: document.getElementById('address').value,
+                mailAddress: document.getElementById('mailAddress').value,
+                cemetery: document.getElementById('cemetery').value,
+                plotNumber: document.getElementById('plotNumber').value,
+                location: document.getElementById('location').value,
+                contractPlan: document.getElementById('contractPlan').value,
+                contractAmount: parseInt(document.getElementById('contractAmount').value) || 0,
+                flowerFee: parseInt(document.getElementById('flowerFee').value) || 0,
+                contractStart: document.getElementById('contractStart').value,
+                paymentCycle: document.getElementById('paymentCycle').value,
+                paidPeriodStart: document.getElementById('paidPeriodStart').value,
+                paidPeriodEnd: document.getElementById('paidPeriodEnd').value,
+                nextPaymentStart: document.getElementById('nextPaymentStart').value,
+                nextPaymentEnd: document.getElementById('nextPaymentEnd').value,
+                contractStatus: document.getElementById('contractStatus').value,
+                lastPaymentDate: document.getElementById('lastPaymentDate').value,
+                payer: document.getElementById('payer').value.trim() || document.getElementById('managerName').value.trim(),
+                customerPaymentMethod: document.getElementById('customerPaymentMethod').value || (document.getElementById('address').value.includes('鹿児島') ? 'cash' : 'transfer'),
+                perPaymentAmount: parseInt(document.getElementById('perPaymentAmount').value) || 0,
+                contractNotes: document.getElementById('contractNotes').value,
+                visitCount: parseInt(document.getElementById('visitCount').value) || 0,
+                notes: document.getElementById('notes').value,
+                group: document.getElementById('customerGroup').value
+            };
+
+            if (editingCustomerId) {
+                const customer = customers.find(c => c.id === editingCustomerId);
+                // 入金済み期間が変わったら受領書チェックをリセット
+                const newPeriod = customerData.paidPeriodStart + '_' + customerData.paidPeriodEnd;
+                if (customer.receiptSentPeriod && customer.receiptSentPeriod !== newPeriod) {
+                    customerData.receiptSent = false;
+                    customerData.receiptSentDate = '';
+                    customerData.receiptSentPeriod = '';
+                }
+                if (customer.photoTakenPeriod && customer.photoTakenPeriod !== newPeriod) {
+                    customerData.photoTaken = false;
+                    customerData.photoTakenDate = '';
+                    customerData.photoTakenPeriod = '';
+                }
+                Object.assign(customer, customerData);
+            } else {
+                customerData.id = Date.now();
+                customerData.payments = [];
+                customers.push(customerData);
+                selectedCustomerId = customerData.id;
+            }
+
+            saveData();
+            renderCustomersList();
+            renderDetailsPanel();
+            closeCustomerModal();
+        });
+
+        document.getElementById('paymentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const customer = customers.find(c => c.id === selectedCustomerId);
+            if (!customer.payments) customer.payments = [];
+
+            const periodStart = document.getElementById('periodStart').value;
+            const periodEnd = document.getElementById('periodEnd').value;
+            let periodText = '';
+            if (periodStart && periodEnd) {
+                const start = new Date(periodStart);
+                const end = new Date(periodEnd);
+                periodText = `${start.getFullYear()}年${start.getMonth()+1}月${start.getDate()}日 〜 ${end.getFullYear()}年${end.getMonth()+1}月${end.getDate()}日`;
+            }
+
+            const paymentData = {
+                date: document.getElementById('paymentDate').value,
+                amount: parseInt(document.getElementById('paymentAmount').value),
+                method: document.getElementById('paymentMethod').value,
+                periodStart: periodStart,
+                periodEnd: periodEnd,
+                periodText: periodText,
+                memo: document.getElementById('paymentMemo').value,
+                status: 'paid'
+            };
+
+            if (editingPaymentId) {
+                // 編集モード
+                const existing = customer.payments.find(p => p.id === editingPaymentId);
+                if (existing) Object.assign(existing, paymentData);
+            } else {
+                // 新規追加
+                paymentData.id = Date.now();
+                customer.payments.unshift(paymentData);
+            }
+            // 前回支払い日付を自動更新
+            customer.lastPaymentDate = paymentData.date;
+            saveData();
+            renderDetailsPanel();
+            renderCustomersList();
+            closePaymentModal();
+        });
+
+        document.getElementById('customerModal').addEventListener('click', function(e) {
+            if (e.target === this) closeCustomerModal();
+        });
+
+        document.getElementById('paymentModal').addEventListener('click', function(e) {
+            if (e.target === this) closePaymentModal();
+        });
+
+        document.getElementById('groupModal').addEventListener('click', function(e) {
+            if (e.target === this) closeGroupModal();
+        });
+
+        // 契約プラン・支払いサイクルに応じたデフォルト金額
+        function updateDefaultAmount() {
+            const plan = document.getElementById('contractPlan').value;
+            const cycle = document.getElementById('paymentCycle').value;
+            // 契約金額は常にフル金額（年額）
+            if (plan === 'annual' && !document.getElementById('contractAmount').value) {
+                document.getElementById('contractAmount').value = 33000;
+            }
+            // プランやサイクル変更時は自動計算に戻す
+            perPaymentManual = false;
+            updateTotalDisplay();
+        }
+
+        // 1回の支払額を手動で変更したかどうかのフラグ
+        let perPaymentManual = false;
+
+        function markPerPaymentManual() {
+            perPaymentManual = true;
+        }
+
+        // 総額表示の更新
+        function updateTotalDisplay() {
+            const contract = parseInt(document.getElementById('contractAmount').value) || 0;
+            const flower = parseInt(document.getElementById('flowerFee').value) || 0;
+            const cycle = document.getElementById('paymentCycle').value;
+            // 総額 = 契約金額 + 供花料（常にフル金額）
+            document.getElementById('totalAmount').value = '¥' + (contract + flower).toLocaleString();
+            // 1回の支払額：手動入力されていなければ自動計算
+            if (!perPaymentManual) {
+                const perPaymentEl = document.getElementById('perPaymentAmount');
+                if (cycle === 'halfyearly') {
+                    perPaymentEl.value = Math.round((contract + flower) / 2);
+                } else {
+                    perPaymentEl.value = contract + flower;
+                }
+            }
+        }
+
+        // 入金済み期間 → 次回入金予定期間の自動計算
+        function autoFillNextPayment() {
+            const startVal = document.getElementById('paidPeriodStart').value;
+            const endVal = document.getElementById('paidPeriodEnd').value;
+            if (!startVal || !endVal) return;
+            // 期間の月数を計算
+            const [sy, sm] = startVal.split('-').map(Number);
+            const [ey, em] = endVal.split('-').map(Number);
+            const months = (ey - sy) * 12 + (em - sm) + 1;
+            if (months <= 0) return;
+            // 次の開始 = 終了月の翌月
+            let nextStartYear = ey;
+            let nextStartMonth = em + 1;
+            if (nextStartMonth > 12) { nextStartMonth = 1; nextStartYear++; }
+            // 次の終了 = 次の開始 + 同じ月数 - 1
+            let totalMonths = (nextStartYear * 12 + nextStartMonth) + months - 1;
+            let nextEndYear = Math.floor((totalMonths - 1) / 12);
+            let nextEndMonth = ((totalMonths - 1) % 12) + 1;
+            const pad = n => String(n).padStart(2, '0');
+            document.getElementById('nextPaymentStart').value = nextStartYear + '-' + pad(nextStartMonth);
+            document.getElementById('nextPaymentEnd').value = nextEndYear + '-' + pad(nextEndMonth);
+        }
+        document.getElementById('paidPeriodStart').addEventListener('change', autoFillNextPayment);
+        document.getElementById('paidPeriodEnd').addEventListener('change', autoFillNextPayment);
+
+        // 契約金額の手入力でも総額更新
+        document.getElementById('contractAmount').addEventListener('input', updateTotalDisplay);
+
+        // 住所欄の郵便番号自動整形 + 住所自動取得
+        let zipLookupDone = '';
+        document.getElementById('address').addEventListener('input', function(e) {
+            let val = this.value;
+            // 先頭が数字で始まる場合、郵便番号として整形
+            if (/^\d/.test(val.replace(/[〒\-\s]/g, ''))) {
+                let digits = val.replace(/[^\d]/g, '');
+                let rest = val.replace(/^[〒\s]*\d[\d\-\s]*/,'');
+                if (digits.length <= 7) {
+                    let formatted = '〒' + digits.slice(0, 3);
+                    if (digits.length > 3) formatted += '-' + digits.slice(3, 7);
+                    this.value = formatted + rest;
+                }
+                // 7桁揃ったら住所を自動取得
+                if (digits.length === 7 && !rest && zipLookupDone !== digits) {
+                    zipLookupDone = digits;
+                    fetchAddressFromZip(digits);
+                }
+            }
+        });
+
+        function fetchAddressFromZip(zipCode) {
+            const addressInput = document.getElementById('address');
+            const currentVal = addressInput.value;
+            fetch('https://zipcloud.ibsnet.co.jp/api/search?zipcode=' + zipCode)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.results && data.results.length > 0) {
+                        const r = data.results[0];
+                        const addr = r.address1 + r.address2 + r.address3;
+                        addressInput.value = '〒' + zipCode.slice(0,3) + '-' + zipCode.slice(3) + ' ' + addr;
+                    }
+                })
+                .catch(err => {
+                    console.log('住所取得エラー:', err);
+                });
+        }
+
+        // 電話番号の自動ハイフン挿入
+        document.getElementById('phone').addEventListener('input', function(e) {
+            let val = this.value.replace(/[^\d]/g, '');
+            if (val.startsWith('0')) {
+                if (val.startsWith('090') || val.startsWith('080') || val.startsWith('070') || val.startsWith('050')) {
+                    // 携帯: 090-1234-5678
+                    if (val.length > 3) val = val.slice(0, 3) + '-' + val.slice(3);
+                    if (val.length > 8) val = val.slice(0, 8) + '-' + val.slice(8);
+                    val = val.slice(0, 13);
+                } else if (val.startsWith('0120') || val.startsWith('0800')) {
+                    // フリーダイヤル: 0120-123-456
+                    if (val.length > 4) val = val.slice(0, 4) + '-' + val.slice(4);
+                    if (val.length > 8) val = val.slice(0, 8) + '-' + val.slice(8);
+                    val = val.slice(0, 12);
+                } else {
+                    // 固定電話: 全て3-3-4形式 (099-281-5870)
+                    if (val.length > 3) val = val.slice(0, 3) + '-' + val.slice(3);
+                    if (val.length > 7) val = val.slice(0, 7) + '-' + val.slice(7);
+                    val = val.slice(0, 12);
+                }
+            }
+            this.value = val;
+        });
+
+        // === データ書き出し（エクスポート） ===
+        function exportData() {
+            const data = {
+                customers: customers,
+                groups: groups,
+                exportDate: new Date().toISOString()
+            };
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '顧客台帳_' + new Date().toLocaleDateString('ja-JP').replace(/\//g, '-') + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // === データ読み込み（インポート） ===
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!data.customers || !Array.isArray(data.customers)) {
+                        alert('正しいデータファイルではありません');
+                        return;
+                    }
+                    const mode = confirm(
+                        data.customers.length + '件のデータが見つかりました。\n\n' +
+                        '【OK】→ 既存データを全て置き換え\n' +
+                        '【キャンセル】→ 既存データに追加'
+                    );
+                    if (mode) {
+                        customers = data.customers;
+                        if (data.groups) groups = data.groups;
+                    } else {
+                        const existingIds = new Set(customers.map(c => c.id));
+                        let added = 0;
+                        data.customers.forEach(c => {
+                            if (!existingIds.has(c.id)) {
+                                customers.push(c);
+                                added++;
+                            }
+                        });
+                        if (data.groups) {
+                            const existingGroupIds = new Set(groups.map(g => g.id));
+                            data.groups.forEach(g => {
+                                if (!existingGroupIds.has(g.id)) groups.push(g);
+                            });
+                        }
+                        alert(added + '件追加しました');
+                    }
+                    saveData();
+                    selectedCustomerId = null;
+                    renderCustomersList();
+                    renderDetailsPanel();
+                    alert('データの読み込みが完了しました（' + customers.length + '件）');
+                } catch (err) {
+                    alert('ファイルの読み込みに失敗しました: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // 読みがな一括設定（マイグレーション）
+        function migrateYomi() {
+            if (localStorage.getItem('_yomiMigrated_v1')) return;
+            const yomiMap = {
+                '赤星':'あかぼし','アカツカ':'あかつか','棈木':'あべき','有川':'ありかわ','有馬':'ありま',
+                '池上':'いけがみ','池田':'いけだ','池元':'いけもと','生駒':'いこま','石塚':'いしづか',
+                '泉':'いずみ','市来':'いちき','市坪':'いちつぼ','伊藤':'いとう','犬伏':'いぬぶし',
+                '指宿':'いぶすき','岩元':'いわもと','上田':'うえだ','牛飼':'うしかい','内村':'うちむら',
+                '江良':'えら','圓':'えん','園佛':'えんぶつ','大迫':'おおさこ','大重':'おおしげ',
+                '大隣':'おおどなり','大朝':'おおあさ','大西':'おおにし','大野':'おおの','大橋':'おおはし',
+                '岡崎':'おかざき','小川':'おがわ','小倉':'おぐら','押川':'おしかわ','小原':'おはら',
+                '折田':'おりた','栫井':'かこい','鼎':'かなえ','金谷':'かなたに','金丸':'かなまる',
+                '樺山':'かばやま','亀沢':'かめざわ','亀澤':'かめざわ','仮屋':'かりや','川崎':'かわさき',
+                '川畑':'かわばた','川村':'かわむら','菊浦':'きくうら','北野':'きたの','北原':'きたはら',
+                '木藤':'きとう','木邑':'きむら','桐野':'きりの','久木田':'くきた','久木元':'くきもと',
+                '楠田':'くすだ','救仁郷':'くにごう','熊野':'くまの','黒岩':'くろいわ','桑畑':'くわはた',
+                '剣持':'けんもち','上妻':'こうづま','河野':'こうの','小久保':'こくぼ','児島':'こじま',
+                '小城':'こじょう','児玉':'こだま','嵯峨':'さが','坂上':'さかがみ','坂下':'さかした',
+                '坂元':'さかもと','崎元':'さきもと','酒匂':'さこう','迫田':'さこだ','佐々木':'ささき',
+                '佐野':'さの','鮫島':'さめじま','重信':'しげのぶ','篠原':'しのはら','正田':'しょうだ',
+                '陣内':'じんない','杉山':'すぎやま','住吉':'すみよし','諏訪':'すわ','関':'せき',
+                '高尾野':'たかおの','高橋':'たかはし','高山':'たかやま','瀧川':'たきがわ','竹下':'たけした',
+                '竹田':'たけだ','田代':'たしろ','立迫':'たちさこ','田中':'たなか','田邊':'たなべ',
+                '谷川':'たにかわ','谷口':'たにぐち','田之上':'たのうえ','田原':'たはら','知識':'ちしき',
+                '千早':'ちはや','中馬':'ちゅうまん','調所':'ちょうしょ','土屋':'つちや','常':'つね',
+                '津曲':'つまがり','鶴田':'つるた','寺下':'てらした','寺田':'てらだ','徳島':'とくしま',
+                '徳田':'とくだ','徳留':'とくどめ','床次':'とこなみ','戸高':'とだか','泊':'とまり',
+                '富山':'とみやま','友野':'ともの','中江':'なかえ','中尾':'なかお','長崎':'ながさき',
+                '中嶋':'なかしま','中園':'なかぞの','永田':'ながた','中津留':'なかつる','中原':'なかはら',
+                '中村':'なかむら','永吉':'ながよし','斜木':'ななめき','新内':'にいうち','新原':'にいはら',
+                '西':'にし','西元':'にしもと','西山':'にしやま','西村':'にしむら','野井倉':'のいくら',
+                '野口':'のぐち','登':'のぼり','野村':'のむら','野元':'のもと','萩原':'はぎわら',
+                '橋口':'はしぐち','枦山':'はぜやま','英':'はなぶさ','馬場':'ばば','濱川':'はまかわ',
+                '濱田':'はまだ','羽牟':'はむ','林':'はやし','原田':'はらだ','春田':'はるた',
+                '春成':'はるなり','東':'ひがし','東本願寺':'ひがしほんがんじ','樋口':'ひぐち',
+                '久永':'ひさなが','肱岡':'ひじおか','平川':'ひらかわ','平瀬':'ひらせ','平田':'ひらた',
+                '樋渡':'ひわたし','深':'ふか','冨加見':'ふかみ','福崎':'ふくざき','福嶋':'ふくしま',
+                '福島':'ふくしま','福田':'ふくだ','福永':'ふくなが','藤崎':'ふじさき','藤野':'ふじの',
+                '古江':'ふるえ','古川':'ふるかわ','古市':'ふるいち','前原':'まえはら','牧':'まき',
+                '真竹':'またけ','松木':'まつき','松清':'まつきよ','松崎':'まつざき','松永':'まつなが',
+                '松村':'まつむら','松元':'まつもと','松本':'まつもと','丸田':'まるた','圓山':'まるやま',
+                '南':'みなみ','嶺崎':'みねざき','宮内':'みやうち','宮城':'みやぎ','宮下':'みやした',
+                '宮原':'みやはら','向井':'むかい','村田':'むらた','村山':'むらやま','毛利':'もうり',
+                '持留':'もちどめ','本木':'もとき','森':'もり','森口':'もりぐち','森永':'もりなが',
+                '八木':'やぎ','薬師':'やくし','柳田':'やなぎだ','柳場':'やなぎば','山内':'やまうち',
+                '山口':'やまぐち','山崎':'やまざき','山路':'やまじ','山下':'やました','山田':'やまだ',
+                '山之内':'やまのうち','山本':'やまもと','山元':'やまもと','由井園':'ゆいぞの',
+                '湯谷':'ゆたに','横田':'よこた','吉迫':'よしさこ','吉松':'よしまつ','吉満':'よしみつ',
+                '笠':'りゅう','鷲津':'わしづ','和田':'わだ','大濱':'おおはま'
+            };
+            let changed = false;
+            customers.forEach(c => {
+                if (c.yomi) return;
+                // 墓名から家名部分を抽出して読みを設定
+                let name = c.graveName.replace(/家之墓$|家の墓$|家之墓」$|別院$/, '').replace(/^「/, '').replace(/」$/, '');
+                // 複合姓（A/B家之墓）→ 最初の姓で
+                let firstName = name.split(/[\/／]/)[0].trim();
+                for (const [kanji, yomi] of Object.entries(yomiMap)) {
+                    if (firstName === kanji || firstName.startsWith(kanji)) {
+                        c.yomi = yomi;
+                        changed = true;
+                        return;
+                    }
+                }
+                // カタカナ・ひらがなで始まる場合はそのまま小文字化
+                if (/^[ぁ-ん]/.test(firstName)) {
+                    c.yomi = firstName;
+                    changed = true;
+                } else if (/^[ァ-ヶ]/.test(firstName)) {
+                    c.yomi = firstName.replace(/[ァ-ヶ]/g, m => String.fromCharCode(m.charCodeAt(0) - 0x60));
+                    changed = true;
+                }
+            });
+            if (changed) saveData();
+            localStorage.setItem('_yomiMigrated_v1', 'true');
+        }
+        migrateYomi();
+
+        // あ～か行の契約データ一括設定
+        function migrateContractAKa() {
+            if (localStorage.getItem('_contractAKa_v1')) return;
+            // あ～か行 = yomiが ぁ～ご で始まる顧客
+            const isAKa = (yomi) => yomi && /^[ぁ-ご]/.test(yomi);
+
+            // 特別な契約金額
+            const specialAmounts = {
+                39600: ['内村','江良','鼎','仮屋','黒岩'],
+                44000: ['熊野'],
+                52800: ['救仁郷'],
+                66000: ['小原','菊浦'],
+                26400: ['小久保'],
+                24000: ['川村'],
+                19800: ['大西']
+            };
+
+            // 半年払い顧客
+            const halfYearlyNames = ['岩元','上田','大隣','亀澤','桐野','黒川'];
+
+            // 供花料
+            const flowerFeeMap = {
+                '小原':10000,'大西':4400,'岡崎':4000,'小倉':11000,
+                '栫井':13200,'北野':10000,'木邑':33000,'仮屋':16500,'黒川':17000
+            };
+
+            let changed = false;
+            customers.forEach(c => {
+                if (!isAKa(c.yomi)) return;
+                // 墓名から姓を抽出
+                let surname = c.graveName.replace(/家之墓$|家の墓$|家$/, '').replace(/^「/,'').replace(/」$/,'').split(/[\/／]/)[0].trim();
+
+                // 契約金額設定
+                let amountSet = false;
+                for (const [amount, names] of Object.entries(specialAmounts)) {
+                    if (names.some(n => surname.includes(n))) {
+                        c.contractAmount = parseInt(amount);
+                        amountSet = true;
+                        break;
+                    }
+                }
+                if (!amountSet) c.contractAmount = 33000;
+
+                // 支払いサイクル
+                if (halfYearlyNames.some(n => surname.includes(n))) {
+                    c.paymentCycle = 'halfyearly';
+                } else {
+                    c.paymentCycle = 'yearly';
+                }
+
+                // 供花料
+                for (const [name, fee] of Object.entries(flowerFeeMap)) {
+                    if (surname.includes(name)) {
+                        c.flowerFee = fee;
+                        break;
+                    }
+                }
+
+                changed = true;
+            });
+            if (changed) saveData();
+            localStorage.setItem('_contractAKa_v1', 'true');
+        }
+        migrateContractAKa();
+
+        // さ～な行の契約データ一括設定
+        function migrateContractSaNa() {
+            if (localStorage.getItem('_contractSaNa_v1')) return;
+            const isSaNa = (yomi) => yomi && /^[さ-の]/.test(yomi);
+
+            let changed = false;
+            customers.forEach(c => {
+                if (!isSaNa(c.yomi)) return;
+
+                let surname = c.graveName.replace(/家之墓$|家の墓$|家$/, '').replace(/^「/,'').replace(/」$/,'').split(/[\/／]/)[0].trim();
+                let manager = c.managerName || '';
+
+                // --- 契約金額 ---
+                // 既にデフォルト(33000)以外の値が設定済みならスキップ
+                if (!c.contractAmount || c.contractAmount === 33000) {
+                    let amount = 33000;
+                    if (['相良','正田','中馬','泊','中江'].some(n => surname.includes(n))) {
+                        amount = 39600;
+                    } else if (surname.includes('迫田') && manager.includes('悟')) {
+                        amount = 39600;
+                    } else if (surname.includes('西') && manager.includes('伸一')) {
+                        amount = 49500;
+                    } else if (['諏訪','永吉'].some(n => surname.includes(n))) {
+                        amount = 26400;
+                    }
+                    c.contractAmount = amount;
+                    changed = true;
+                }
+
+                // --- 支払いサイクル ---
+                if (!c.paymentCycle || c.paymentCycle === 'yearly') {
+                    const halfYearlyAll = ['相良','千早','調所','長崎','登','中原'];
+                    const halfYearlySpecific = [
+                        {surname:'酒匂'},
+                        {surname:'戸高'},
+                        {surname:'竹下', manager:'豪'},
+                        {surname:'田中', manager:'信之'},
+                        {surname:'中尾', manager:'洋子'},
+                        {surname:'永田', manager:'まさこ'},
+                    ];
+
+                    let cycle = 'yearly';
+                    if (halfYearlyAll.some(n => surname.includes(n))) {
+                        cycle = 'halfyearly';
+                    } else {
+                        for (const spec of halfYearlySpecific) {
+                            if (surname.includes(spec.surname)) {
+                                if (!spec.manager || manager.includes(spec.manager)) {
+                                    cycle = 'halfyearly';
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (cycle !== 'yearly') {
+                        c.paymentCycle = cycle;
+                        changed = true;
+                    }
+                }
+
+                // --- 供花料 ---
+                if (!c.flowerFee) {
+                    const flowerFeeMap = {
+                        '相良':11000, '瀧川':79200, '滝川':79200,
+                        '竹田':37400, '中馬':13200, '土屋':33000,
+                        '戸高':7000, '泊':25000, '中尾':30000, '長崎':22000,
+                        '新原':26400
+                    };
+                    for (const [name, fee] of Object.entries(flowerFeeMap)) {
+                        if (surname.includes(name)) {
+                            c.flowerFee = fee;
+                            changed = true;
+                            break;
+                        }
+                    }
+                    // 特定の管理者名で判別する供花料
+                    if (!c.flowerFee) {
+                        if (surname.includes('竹下') && manager.includes('豪')) {
+                            c.flowerFee = 12000; changed = true;
+                        } else if (surname.includes('永田') && (manager.includes('産婦人科') || c.graveName.includes('産婦人科') || (c.notes && c.notes.includes('産婦人科')))) {
+                            c.flowerFee = 5500; changed = true;
+                        } else if (surname.includes('西') && (manager.includes('たかはし') || manager.includes('高橋') || manager.includes('よしこ'))) {
+                            c.flowerFee = 21000; changed = true;
+                        }
+                    }
+                }
+            });
+            if (changed) saveData();
+            localStorage.setItem('_contractSaNa_v1', 'true');
+        }
+        migrateContractSaNa();
+
+        // は～わ行の契約データ一括設定
+        function migrateContractHaWa() {
+            if (localStorage.getItem('_contractHaWa_v1')) return;
+            const isHaWa = (yomi) => yomi && /^[は-ん]/.test(yomi);
+
+            let changed = false;
+            customers.forEach(c => {
+                if (!isHaWa(c.yomi)) return;
+
+                let surname = c.graveName.replace(/家之墓$|家の墓$|家$/, '').replace(/^「/,'').replace(/」$/,'').split(/[\/／]/)[0].trim();
+                let manager = c.managerName || '';
+
+                // --- 契約金額 ---
+                if (!c.contractAmount || c.contractAmount === 33000) {
+                    let amount = 33000;
+                    if (['橋口','圓山'].some(n => surname.includes(n))) {
+                        amount = 39600;
+                    } else if (surname.includes('春田') && manager.includes('ときこ')) {
+                        amount = 39600;
+                    } else if (['樋渡','深','古川'].some(n => surname.includes(n))) {
+                        amount = 39600;
+                    } else if (surname.includes('村田')) {
+                        amount = 52800;
+                    }
+                    c.contractAmount = amount;
+                    changed = true;
+                }
+
+                // --- 支払いサイクル ---
+                if (!c.paymentCycle || c.paymentCycle === 'yearly') {
+                    const halfYearlyAll = ['平川','平田','樋渡','藤崎','藤野','古江','本木','柳場'];
+                    const halfYearlySpecific = [
+                        {surname:'冨加見'}, {surname:'深'},
+                        {surname:'宮内', manager:'あきひこ'},
+                        {surname:'山内', manager:'つとむ'},
+                        {surname:'由井園'}, {surname:'笠'}, {surname:'鷲津'},
+                    ];
+
+                    let cycle = 'yearly';
+                    if (halfYearlyAll.some(n => surname.includes(n))) {
+                        cycle = 'halfyearly';
+                    } else {
+                        for (const spec of halfYearlySpecific) {
+                            if (surname.includes(spec.surname)) {
+                                if (!spec.manager || manager.includes(spec.manager)) {
+                                    cycle = 'halfyearly';
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (cycle !== 'yearly') {
+                        c.paymentCycle = cycle;
+                        changed = true;
+                    }
+                }
+
+                // --- 供花料 ---
+                if (!c.flowerFee) {
+                    const flowerFeeMap = {
+                        '宮下':7000, '圓山':8400, '古田':26400,
+                        '福田':13200, '林':13200, '萩原':6000,
+                        '橋口':19800, '羽牟':19800, '福崎':44000
+                    };
+                    for (const [name, fee] of Object.entries(flowerFeeMap)) {
+                        if (surname.includes(name)) {
+                            c.flowerFee = fee;
+                            changed = true;
+                            break;
+                        }
+                    }
+                    // 特定の管理者名で判別
+                    if (!c.flowerFee) {
+                        if (surname.includes('宮内') && (manager.includes('加藤') || manager.includes('れいこ'))) {
+                            c.flowerFee = 5600; changed = true;
+                        }
+                    }
+                }
+            });
+            if (changed) saveData();
+            localStorage.setItem('_contractHaWa_v1', 'true');
+        }
+        migrateContractHaWa();
+
+        // 墓名に「家之墓」を付与
+        function migrateIeNoHaka() {
+            if (localStorage.getItem('_ieNoHaka_v1')) return;
+            let changed = false;
+            customers.forEach(c => {
+                if (!c.graveName.includes('墓')) {
+                    c.graveName = c.graveName + '家之墓';
+                    changed = true;
+                }
+            });
+            if (changed) saveData();
+            localStorage.setItem('_ieNoHaka_v1', 'true');
+        }
+        migrateIeNoHaka();
+
+        // 支払人・支払い方法の自動設定
+        function migratePayerMethod() {
+            if (localStorage.getItem('_payerMethod_v1')) return;
+            let changed = false;
+            customers.forEach(c => {
+                if (!c.payer) {
+                    c.payer = c.managerName || '';
+                    changed = true;
+                }
+                if (!c.customerPaymentMethod) {
+                    c.customerPaymentMethod = (c.address && c.address.includes('鹿児島')) ? 'cash' : 'transfer';
+                    changed = true;
+                }
+            });
+            if (changed) saveData();
+            localStorage.setItem('_payerMethod_v1', 'true');
+        }
+        migratePayerMethod();
+
+        // 入金済み期間のマイグレーション（令和6〜8年）
+        function migratePaidPeriod() {
+            if (localStorage.getItem('_paidPeriod_v1')) return;
+            const year6 = ['赤星','牛飼','大野','川崎'];
+            const year7 = ['大迫','小川','鼎','樺山','久木元','楠田','熊野','上妻','小久保'];
+            const year8 = ['赤塚','有川','園','大重','岡崎','小倉','小原','仮屋','川畑','北野','木邑','久木田','黒岩','小城'];
+            function getSurname(graveName) {
+                return graveName.replace(/家之墓$|家の墓$|家$/, '').replace(/^「/,'').replace(/」$/,'').split(/[\/／]/)[0].trim();
+            }
+            function setPeriod(c, reiwaYear) {
+                if (c.paidPeriodStart && c.paidPeriodEnd) return false;
+                const westernYear = 2018 + reiwaYear;
+                const isHalf = c.paymentCycle === 'halfyearly';
+                if (isHalf) {
+                    c.paidPeriodStart = westernYear + '-01';
+                    c.paidPeriodEnd = westernYear + '-06';
+                    c.nextPaymentStart = westernYear + '-07';
+                    c.nextPaymentEnd = westernYear + '-12';
+                } else {
+                    c.paidPeriodStart = westernYear + '-01';
+                    c.paidPeriodEnd = westernYear + '-12';
+                    c.nextPaymentStart = (westernYear + 1) + '-01';
+                    c.nextPaymentEnd = (westernYear + 1) + '-12';
+                }
+                return true;
+            }
+            let changed = false;
+            customers.forEach(c => {
+                const surname = getSurname(c.graveName);
+                if (year6.some(n => surname === n || surname.startsWith(n))) {
+                    if (setPeriod(c, 6)) changed = true;
+                } else if (year7.some(n => surname === n || surname.startsWith(n))) {
+                    if (setPeriod(c, 7)) changed = true;
+                } else if (year8.some(n => surname === n || surname.startsWith(n))) {
+                    if (setPeriod(c, 8)) changed = true;
+                }
+            });
+            if (changed) saveData();
+            localStorage.setItem('_paidPeriod_v1', 'true');
+        }
+        migratePaidPeriod();
+
+        // 入金済み期間マイグレーション第2弾（令和5〜8年・サ行〜ナ行中心）
+        function migratePaidPeriod2() {
+            if (localStorage.getItem('_paidPeriod_v2')) return;
+            function getSurname(graveName) {
+                return graveName.replace(/家之墓$|家の墓$|家$/, '').replace(/^「/,'').replace(/」$/,'').split(/[\/／]/)[0].trim();
+            }
+            function setPeriod(c, reiwaYear) {
+                if (c.paidPeriodStart && c.paidPeriodEnd) return false;
+                const wy = 2018 + reiwaYear;
+                const isHalf = c.paymentCycle === 'halfyearly';
+                if (isHalf) {
+                    c.paidPeriodStart = wy + '-01';
+                    c.paidPeriodEnd = wy + '-06';
+                    c.nextPaymentStart = wy + '-07';
+                    c.nextPaymentEnd = wy + '-12';
+                } else {
+                    c.paidPeriodStart = wy + '-01';
+                    c.paidPeriodEnd = wy + '-12';
+                    c.nextPaymentStart = (wy + 1) + '-01';
+                    c.nextPaymentEnd = (wy + 1) + '-12';
+                }
+                return true;
+            }
+            // マッチング: {name: 墓名の一部, manager: 管理者名の一部(任意)}
+            const year5 = [
+                {name:'徳留'}
+            ];
+            const year6 = [
+                {name:'永吉'}
+            ];
+            const year7 = [
+                {name:'崎元'},
+                {name:'佐野'},
+                {name:'土屋'},
+                {name:'中尾', manager:'久美子'},
+                {name:'中園', manager:'悦郎'},
+                {name:'永田', manager:'塩田'},
+                {name:'永田産婦人科'},
+                {name:'西', manager:'伸一'}
+            ];
+            const year8 = [
+                {name:'酒匂', manager:'信子'},
+                {name:'迫田', manager:'治憲'},
+                {name:'篠原', manager:'国彦'},
+                {name:'諏訪'},
+                {name:'田中中村'},
+                {name:'田之上'},
+                {name:'津曲'},
+                {name:'鶴田'},
+                {name:'寺田', manager: undefined, excludeManager:'信男'},
+                {name:'中園', manager:'寺田信男'},
+                {name:'中村', manager:'俊一郎'},
+                {name:'新内'},
+                {name:'新原'},
+                {name:'西', manager:'高橋淑子'},
+                {name:'西元'}
+            ];
+            function matches(c, rule) {
+                const surname = getSurname(c.graveName);
+                const gn = c.graveName || '';
+                const mn = c.managerName || '';
+                const nameMatch = surname === rule.name || surname.startsWith(rule.name) || gn.includes(rule.name);
+                if (!nameMatch) return false;
+                if (rule.manager && !mn.includes(rule.manager)) return false;
+                if (rule.excludeManager && mn.includes(rule.excludeManager)) return false;
+                return true;
+            }
+            let changed = false;
+            customers.forEach(c => {
+                for (const r of year5) { if (matches(c, r)) { if (setPeriod(c, 5)) changed = true; return; } }
+                for (const r of year6) { if (matches(c, r)) { if (setPeriod(c, 6)) changed = true; return; } }
+                for (const r of year7) { if (matches(c, r)) { if (setPeriod(c, 7)) changed = true; return; } }
+                for (const r of year8) { if (matches(c, r)) { if (setPeriod(c, 8)) changed = true; return; } }
+            });
+            if (changed) saveData();
+            localStorage.setItem('_paidPeriod_v2', 'true');
+        }
+        migratePaidPeriod2();
+
+        // 入金済み期間マイグレーション第3弾（令和5〜10年・ハ行〜ワ行中心）
+        function migratePaidPeriod3() {
+            if (localStorage.getItem('_paidPeriod_v3')) return;
+            function getSurname(graveName) {
+                return graveName.replace(/家之墓$|家の墓$|家$/, '').replace(/^「/,'').replace(/」$/,'').split(/[\/／]/)[0].trim();
+            }
+            function setPeriod(c, reiwaYear) {
+                if (c.paidPeriodStart && c.paidPeriodEnd) return false;
+                const wy = 2018 + reiwaYear;
+                const isHalf = c.paymentCycle === 'halfyearly';
+                if (isHalf) {
+                    c.paidPeriodStart = wy + '-01';
+                    c.paidPeriodEnd = wy + '-06';
+                    c.nextPaymentStart = wy + '-07';
+                    c.nextPaymentEnd = wy + '-12';
+                } else {
+                    c.paidPeriodStart = wy + '-01';
+                    c.paidPeriodEnd = wy + '-12';
+                    c.nextPaymentStart = (wy + 1) + '-01';
+                    c.nextPaymentEnd = (wy + 1) + '-12';
+                }
+                return true;
+            }
+            const year5 = [
+                {name:'山崎'},
+                {name:'吉満', sub:'小平'},
+            ];
+            const year6 = [
+                {name:'馬場', manager:'信年'},
+                {name:'東本願寺'},
+                {name:'森', exact:true},
+                {name:'横田'},
+            ];
+            const year7 = [
+                {name:'久永'},
+                {name:'平瀬'},
+                {name:'前原'},
+                {name:'松永'},
+                {name:'南'},
+                {name:'峯崎'},
+                {name:'毛利'},
+                {name:'持留'},
+                {name:'森永', sub:'右'},
+                {name:'山元', manager:'厚子'},
+                {name:'山本', manager:'和人'},
+                {name:'吉迫'},
+            ];
+            const year8 = [
+                {name:'濵田', sub:'十字路'},
+                {name:'東', exact:true},
+                {name:'福崎'},
+                {name:'福島', manager:'玲子'},
+                {name:'福永', sub:'島名'},
+                {name:'丸田'},
+                {name:'宮内', manager:'玲子'},
+                {name:'宮原', manager:'正二郎'},
+                {name:'山田'},
+                {name:'山本', manager:'良樹'},
+            ];
+            const year10 = [
+                {name:'宮下', manager:'池田京子'},
+            ];
+            function matches(c, rule) {
+                const surname = getSurname(c.graveName);
+                const gn = c.graveName || '';
+                const mn = c.managerName || '';
+                if (rule.exact) {
+                    if (surname !== rule.name && gn.replace(/家之墓$|家の墓$|家$/,'').trim() !== rule.name) return false;
+                } else {
+                    if (!surname.startsWith(rule.name) && !gn.includes(rule.name)) return false;
+                }
+                if (rule.sub && !gn.includes(rule.sub)) return false;
+                if (rule.manager && !mn.includes(rule.manager)) return false;
+                return true;
+            }
+            let changed = false;
+            customers.forEach(c => {
+                for (const r of year5)  { if (matches(c, r)) { if (setPeriod(c, 5))  changed = true; return; } }
+                for (const r of year6)  { if (matches(c, r)) { if (setPeriod(c, 6))  changed = true; return; } }
+                for (const r of year7)  { if (matches(c, r)) { if (setPeriod(c, 7))  changed = true; return; } }
+                for (const r of year8)  { if (matches(c, r)) { if (setPeriod(c, 8))  changed = true; return; } }
+                for (const r of year10) { if (matches(c, r)) { if (setPeriod(c, 10)) changed = true; return; } }
+            });
+            if (changed) saveData();
+            localStorage.setItem('_paidPeriod_v3', 'true');
+        }
+        migratePaidPeriod3();
+
+        // 受領書送付リストの初期設定（指定5件以外は全員済み）
+        function migrateSendListInit() {
+            if (localStorage.getItem('_sendListInit_v1')) return;
+            // この5件だけ未送付のままにする
+            const pending = [
+                { name: '大野' },
+                { name: '松本', manager: '黒岩' },
+                { name: '栫井', manager: '邦彦' },
+                { name: '住吉' },
+                { name: '古田' },
+            ];
+            function getSurname(graveName) {
+                return graveName.replace(/家之墓$|家の墓$|家$/, '').replace(/^「/,'').replace(/」$/,'').split(/[\/／]/)[0].trim();
+            }
+            function isPending(c) {
+                const surname = getSurname(c.graveName);
+                const mn = c.managerName || '';
+                return pending.some(p => {
+                    if (!surname.startsWith(p.name)) return false;
+                    if (p.manager && !mn.includes(p.manager)) return false;
+                    return true;
+                });
+            }
+            let changed = false;
+            customers.forEach(c => {
+                if (!c.paidPeriodStart || !c.paidPeriodEnd) return;
+                if (isPending(c)) return;
+                if (!c.photoTaken) {
+                    c.photoTaken = true;
+                    c.photoTakenDate = new Date().toISOString();
+                    c.photoTakenPeriod = c.paidPeriodStart + '_' + c.paidPeriodEnd;
+                    changed = true;
+                }
+                if (!c.receiptSent) {
+                    c.receiptSent = true;
+                    c.receiptSentDate = new Date().toISOString();
+                    c.receiptSentPeriod = c.paidPeriodStart + '_' + c.paidPeriodEnd;
+                    changed = true;
+                }
+            });
+            if (changed) saveData();
+            localStorage.setItem('_sendListInit_v1', 'true');
+        }
+        migrateSendListInit();
+
+        document.getElementById('sortOrder').value = sortOrder;
+        renderCustomersList();
+        renderDetailsPanel();
+        updateSummary();
+        updateSendListBadge();
+    </script>
+</body>
+</html>
