@@ -861,6 +861,9 @@
                 <button class="btn-primary" onclick="openCustomerModal()">➕ 新規顧客追加</button>
                 <button class="btn-primary" onclick="showOverallStats()">📊 全体統計</button>
                 <button class="btn-primary" onclick="showRanking()">🏆 売上ランキング</button>
+                <button class="btn-primary" onclick="exportData()" style="background:#4CAF50;color:white;">📤 データ書出</button>
+                <button class="btn-primary" onclick="document.getElementById('importFile').click()" style="background:#FF9800;color:white;">📥 データ読込</button>
+                <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
             </div>
         </div>
 
@@ -1031,6 +1034,62 @@
 
         function saveData() {
             localStorage.setItem('customerVisits', JSON.stringify(customers));
+        }
+
+        function exportData() {
+            const data = {
+                customers: customers,
+                sortOrder: sortOrder,
+                manualOrder: manualOrder,
+                exportDate: new Date().toISOString()
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '顧客来店記録_' + new Date().toISOString().slice(0, 10) + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.customers && Array.isArray(data.customers)) {
+                        const count = data.customers.length;
+                        if (customers.length > 0) {
+                            if (!confirm(`既存データ(${customers.length}件)を上書きしますか？\n読込データ: ${count}件`)) {
+                                event.target.value = '';
+                                return;
+                            }
+                        }
+                        customers = data.customers;
+                        saveData();
+                        if (data.sortOrder) {
+                            sortOrder = data.sortOrder;
+                            localStorage.setItem('customerSortOrder', sortOrder);
+                        }
+                        if (data.manualOrder) {
+                            manualOrder = data.manualOrder;
+                            localStorage.setItem('customerManualOrder', JSON.stringify(manualOrder));
+                        }
+                        selectedCustomerId = null;
+                        renderCustomersList();
+                        renderVisitsPanel();
+                        alert(`${count}件の顧客データを読み込みました！`);
+                    } else {
+                        alert('無効なデータ形式です');
+                    }
+                } catch (err) {
+                    alert('ファイルの読み込みに失敗しました: ' + err.message);
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
         }
 
         function changeSortOrder() {
