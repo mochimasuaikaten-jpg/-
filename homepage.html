@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>持増愛花店 | 鹿児島市唐湊 とそ墓地すぐそばの花屋</title>
+    <meta name="description" content="鹿児島市唐湊の花屋 持増愛花店。とそ墓地すぐそば。アレンジメント・花束・墓清掃・供花代行。年中無休 7:00〜18:00（季節により変動）。">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&family=Noto+Serif+JP:wght@400;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --green-dark: #2d5016;
+            --green: #4a7c2e;
+            --green-light: #6ba34a;
+            --cream: #faf8f0;
+            --warm-white: #fffef9;
+            --brown: #5c4033;
+            --brown-light: #8b6b4a;
+            --gold: #b8960c;
+            --text: #333;
+            --text-light: #666;
+            --sakura: #f5e6e0;
+            --sakura-dark: #d4a0a0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            color: var(--text);
+            background: var(--warm-white);
+            line-height: 1.8;
+        }
+
+        /* ===== ナビゲーション ===== */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            box-shadow: 0 1px 10px rgba(0,0,0,0.08);
+        }
+
+        .nav-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 70px;
+        }
+
+        .nav-logo {
+            font-family: 'Noto Serif JP', serif;
+            font-size: 1.3em;
+            font-weight: 700;
+            color: var(--green-dark);
+            text-decoration: none;
+        }
+
+        .nav-logo small {
+            font-size: 0.55em;
+            font-weight: 400;
+            color: var(--text-light);
+            display: block;
+            margin-top: -2px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text);
+            font-size: 0.9em;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--green);
+        }
+
+        .nav-cta {
+            background: var(--green);
+            color: white !important;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+        }
+
+        .nav-cta:hover {
+            background: var(--green-dark) !important;
+            color: white !important;
+        }
+
+        /* ハンバーガー */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            padding: 5px;
+            background: none;
+            border: none;
+        }
+
+        .hamburger span {
+            width: 25px;
+            height: 2px;
+            background: var(--text);
+            transition: 0.3s;
+        }
+
+        /* ===== ヒーロー ===== */
+        .hero {
+            margin-top: 70px;
+            background: linear-gradient(135deg, var(--green-dark) 0%, var(--green) 50%, var(--green-light) 100%);
+            color: white;
+            padding: 100px 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse, rgba(255,255,255,0.08) 0%, transparent 70%);
+            animation: float 8s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(30px, -30px); }
+        }
+
+        .hero-content {
+            position: relative;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 6px 20px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin-bottom: 25px;
+            backdrop-filter: blur(5px);
+        }
+
+        .hero h1 {
+            font-family: 'Noto Serif JP', serif;
+            font-size: 3em;
+            font-weight: 700;
+            margin-bottom: 15px;
+            letter-spacing: 0.05em;
+        }
+
+        .hero-sub {
+            font-size: 1.2em;
+            opacity: 0.9;
+            margin-bottom: 15px;
+            font-weight: 300;
+        }
+
+        .hero-hours {
+            font-size: 1em;
+            opacity: 0.85;
+            margin-bottom: 40px;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 14px 35px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 1em;
+            text-decoration: none;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+            font-family: inherit;
+        }
+
+        .btn-white {
+            background: white;
+            color: var(--green-dark);
+        }
+
+        .btn-white:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: white;
+            border: 2px solid rgba(255,255,255,0.5);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255,255,255,0.15);
+            border-color: white;
+        }
+
+        .btn-green {
+            background: var(--green);
+            color: white;
+        }
+
+        .btn-green:hover {
+            background: var(--green-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        /* ===== セクション共通 ===== */
+        .section {
+            padding: 90px 20px;
+        }
+
+        .section-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-family: 'Noto Serif JP', serif;
+            font-size: 2em;
+            color: var(--green-dark);
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: var(--text-light);
+            margin-bottom: 60px;
+            font-size: 0.95em;
+        }
+
+        /* ===== 特徴 ===== */
+        .features {
+            background: var(--cream);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 40px 30px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 35px rgba(0,0,0,0.1);
+        }
+
+        .feature-icon {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, var(--green-light), var(--green));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 1.8em;
+        }
+
+        .feature-card h3 {
+            font-size: 1.15em;
+            margin-bottom: 12px;
+            color: var(--green-dark);
+        }
+
+        .feature-card p {
+            color: var(--text-light);
+            font-size: 0.9em;
+            line-height: 1.7;
+        }
+
+        /* ===== サービス ===== */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+        }
+
+        .service-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            transition: transform 0.3s;
+        }
+
+        .service-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .service-header {
+            padding: 30px 30px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .service-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--cream);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            flex-shrink: 0;
+        }
+
+        .service-header h3 {
+            font-size: 1.2em;
+            color: var(--green-dark);
+        }
+
+        .service-body {
+            padding: 20px 30px 30px;
+        }
+
+        .service-body p {
+            color: var(--text-light);
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        .service-price {
+            display: inline-block;
+            background: var(--cream);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            color: var(--green-dark);
+            font-size: 0.95em;
+        }
+
+        /* ===== 料金 ===== */
+        .pricing {
+            background: var(--cream);
+        }
+
+        .pricing-table {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        }
+
+        .pricing-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 22px 35px;
+            border-bottom: 1px solid #f0ede5;
+            transition: background 0.2s;
+        }
+
+        .pricing-row:last-child {
+            border-bottom: none;
+        }
+
+        .pricing-row:hover {
+            background: var(--cream);
+        }
+
+        .pricing-name {
+            font-weight: 600;
+            font-size: 1em;
+        }
+
+        .pricing-name small {
+            display: block;
+            font-weight: 400;
+            color: var(--text-light);
+            font-size: 0.82em;
+            margin-top: 3px;
+        }
+
+        .pricing-amount {
+            font-family: 'Noto Serif JP', serif;
+            font-size: 1.3em;
+            font-weight: 700;
+            color: var(--green-dark);
+        }
+
+        .pricing-amount small {
+            font-size: 0.6em;
+            font-weight: 400;
+            color: var(--text-light);
+        }
+
+        .pricing-note {
+            text-align: center;
+            margin-top: 20px;
+            color: var(--text-light);
+            font-size: 0.85em;
+        }
+
+        /* ===== 定期供花の流れ ===== */
+        .flow-steps {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            position: relative;
+        }
+
+        .flow-step {
+            text-align: center;
+            position: relative;
+        }
+
+        .flow-number {
+            width: 50px;
+            height: 50px;
+            background: var(--green);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2em;
+            margin: 0 auto 15px;
+        }
+
+        .flow-step h4 {
+            font-size: 1em;
+            color: var(--green-dark);
+            margin-bottom: 8px;
+        }
+
+        .flow-step p {
+            color: var(--text-light);
+            font-size: 0.85em;
+        }
+
+        .flow-arrow {
+            position: absolute;
+            top: 25px;
+            right: -15px;
+            color: var(--green-light);
+            font-size: 1.2em;
+        }
+
+        /* ===== お客様の声（将来用プレースホルダー） ===== */
+
+        /* ===== 店舗情報 ===== */
+        .shop-info {
+            background: var(--green-dark);
+            color: white;
+        }
+
+        .shop-info .section-title {
+            color: white;
+        }
+
+        .shop-info .section-subtitle {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .shop-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            align-items: start;
+        }
+
+        .shop-detail-list {
+            list-style: none;
+        }
+
+        .shop-detail-list li {
+            padding: 16px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+            display: flex;
+            gap: 15px;
+        }
+
+        .shop-detail-list li:last-child {
+            border-bottom: none;
+        }
+
+        .shop-label {
+            font-weight: 600;
+            min-width: 90px;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.9em;
+        }
+
+        .shop-value {
+            font-size: 0.95em;
+        }
+
+        .shop-value a {
+            color: white;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(255,255,255,0.4);
+        }
+
+        .shop-value a:hover {
+            border-bottom-color: white;
+        }
+
+        .map-container {
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .map-container iframe {
+            width: 100%;
+            height: 350px;
+            border: 0;
+        }
+
+        /* ===== CTA ===== */
+        .cta {
+            background: linear-gradient(135deg, var(--green) 0%, var(--green-dark) 100%);
+            color: white;
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .cta h2 {
+            font-family: 'Noto Serif JP', serif;
+            font-size: 2em;
+            margin-bottom: 15px;
+        }
+
+        .cta p {
+            opacity: 0.9;
+            margin-bottom: 35px;
+            font-size: 1.05em;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-tel {
+            font-size: 1.2em;
+            letter-spacing: 0.05em;
+        }
+
+        /* ===== フッター ===== */
+        .footer {
+            background: #1a1a1a;
+            color: rgba(255,255,255,0.6);
+            text-align: center;
+            padding: 30px 20px;
+            font-size: 0.85em;
+        }
+
+        .footer a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+        }
+
+        /* ===== レスポンシブ ===== */
+        @media (max-width: 900px) {
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .shop-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .flow-steps {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .flow-arrow {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 70px;
+                left: 0;
+                right: 0;
+                background: white;
+                flex-direction: column;
+                padding: 20px;
+                gap: 15px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            }
+
+            .nav-links.open {
+                display: flex;
+            }
+
+            .hamburger {
+                display: flex;
+            }
+
+            .hero {
+                padding: 60px 20px;
+            }
+
+            .hero h1 {
+                font-size: 2em;
+            }
+
+            .hero-sub {
+                font-size: 1em;
+            }
+
+            .section {
+                padding: 60px 20px;
+            }
+
+            .section-title {
+                font-size: 1.6em;
+            }
+
+            .flow-steps {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .pricing-row {
+                padding: 18px 20px;
+            }
+        }
+
+        /* ===== 写真プレースホルダー ===== */
+        .photo-placeholder {
+            background: var(--cream);
+            border: 2px dashed #ccc;
+            border-radius: 16px;
+            padding: 60px 20px;
+            text-align: center;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ナビゲーション -->
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="#" class="nav-logo">
+                持増愛花店
+                <small>鹿児島市唐湊 とそ墓地すぐそば</small>
+            </a>
+            <button class="hamburger" onclick="toggleMenu()" aria-label="メニュー">
+                <span></span><span></span><span></span>
+            </button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#features">特徴</a></li>
+                <li><a href="#services">サービス</a></li>
+                <li><a href="#pricing">料金</a></li>
+                <li><a href="#flow">ご利用の流れ</a></li>
+                <li><a href="#shop">店舗情報</a></li>
+                <li><a href="#contact" class="nav-cta">お問い合わせ</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- ヒーロー -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-badge">とそ墓地すぐそばの花屋</div>
+            <h1>持増愛花店</h1>
+            <p class="hero-sub">供花・墓清掃の代行なら<br>墓地すぐそばの私たちにおまかせ</p>
+            <p class="hero-hours">年中無休 7:00〜18:00（季節により変動）</p>
+            <div class="hero-buttons">
+                <a href="tel:099-254-4341" class="btn btn-white btn-tel">099-254-4341</a>
+                <a href="#services" class="btn btn-outline">サービスを見る</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 特徴 -->
+    <section class="section features" id="features">
+        <div class="section-inner">
+            <h2 class="section-title">私たちの強み</h2>
+            <p class="section-subtitle">墓地のすぐそばだからできること</p>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: none; font-family: 'Noto Serif JP', serif; font-size: 1.3em; color: var(--green-dark); font-weight: 700;">01</div>
+                    <h3>とそ墓地のすぐそば</h3>
+                    <p>墓地から歩いてすぐの好立地。お墓参りの前後にお気軽にお立ち寄りいただけます。供花のご相談もその場で対応いたします。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: none; font-family: 'Noto Serif JP', serif; font-size: 1.3em; color: var(--green-dark); font-weight: 700;">02</div>
+                    <h3>年中無休で毎日営業</h3>
+                    <p>朝7時から夕方18時まで、年中無休で営業中。急なお墓参りや法事にも対応できます。お盆やお彼岸も休まず営業しています。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: none; font-family: 'Noto Serif JP', serif; font-size: 1.3em; color: var(--green-dark); font-weight: 700;">03</div>
+                    <h3>供花・墓掃除の代行</h3>
+                    <p>遠方にお住まいでお墓の管理が難しい方へ。定期的な供花や墓掃除を代行いたします。大切なご先祖様のお墓を真心こめてお守りします。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 遠方の方へ訴求 -->
+    <section class="section" style="background: linear-gradient(135deg, var(--green-dark) 0%, var(--green) 100%); color: white; padding: 80px 20px;">
+        <div class="section-inner" style="max-width: 900px;">
+            <h2 style="font-family: 'Noto Serif JP', serif; font-size: 1.8em; text-align: center; margin-bottom: 15px;">遠方にお住まいで<br>お墓の管理にお困りではありませんか？</h2>
+            <p style="text-align: center; opacity: 0.9; margin-bottom: 40px; font-size: 1em; line-height: 1.9;">
+                「なかなか帰省できない」「高齢でお墓参りが難しくなった」<br>
+                そんなお気持ちに、墓地のすぐそばにある私たちが寄り添います。<br>
+                定期的な供花や清掃などで、大切なご先祖様のお墓をお守りします。
+            </p>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 40px;">
+                <div style="text-align: center; background: rgba(255,255,255,0.12); padding: 25px 15px; border-radius: 14px;">
+                    <div style="font-weight: 700; font-size: 1.1em; margin-bottom: 6px;">墓地のすぐそば</div>
+                    <div style="font-size: 0.82em; opacity: 0.8;">何かあってもすぐ駆けつけます</div>
+                </div>
+                <div style="text-align: center; background: rgba(255,255,255,0.12); padding: 25px 15px; border-radius: 14px;">
+                    <div style="font-weight: 700; font-size: 1.1em; margin-bottom: 6px;">一つひとつ丁寧に</div>
+                    <div style="font-size: 0.82em; opacity: 0.8;">お墓ごとに心を込めてお手入れ</div>
+                </div>
+                <div style="text-align: center; background: rgba(255,255,255,0.12); padding: 25px 15px; border-radius: 14px;">
+                    <div style="font-weight: 700; font-size: 1.1em; margin-bottom: 6px;">365日対応</div>
+                    <div style="font-size: 0.82em; opacity: 0.8;">年中無休で安心</div>
+                </div>
+            </div>
+            <div style="text-align: center;">
+                <a href="tel:099-254-4341" class="btn btn-white btn-tel" style="margin-right: 10px;">まずはお電話ください</a>
+                <a href="mailto:mochimasuaikaten@gmail.com" class="btn btn-outline">メールで相談する</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- サービス -->
+    <section class="section" id="services">
+        <div class="section-inner">
+            <h2 class="section-title">サービス内容</h2>
+            <p class="section-subtitle">花のことなら何でもご相談ください</p>
+            <div class="services-grid">
+                <div class="service-card">
+                    <div class="service-header">
+                        <div class="service-icon" style="font-size: 0.9em; font-family: 'Noto Serif JP', serif; font-weight: 700; color: var(--green-dark); background: var(--cream);">01</div>
+                        <h3>供花代行</h3>
+                    </div>
+                    <div class="service-body">
+                        <p>お墓への供花を代行いたします。季節のお花を心を込めてお供えします。遠方でなかなかお墓参りに行けない方に多くご利用いただいています。</p>
+                        <div class="service-price">作業代 500円〜</div>
+                    </div>
+                </div>
+                <div class="service-card">
+                    <div class="service-header">
+                        <div class="service-icon" style="font-size: 0.9em; font-family: 'Noto Serif JP', serif; font-weight: 700; color: var(--green-dark); background: var(--cream);">02</div>
+                        <h3>墓清掃（都度）</h3>
+                    </div>
+                    <div class="service-body">
+                        <p>草むしり、墓石の水洗い、周辺の清掃を行います。お盆・お彼岸前や法事の前など、必要な時にご依頼いただけます。</p>
+                        <div class="service-price">5,000円〜</div>
+                    </div>
+                </div>
+                <div class="service-card">
+                    <div class="service-header">
+                        <div class="service-icon" style="font-size: 0.9em; font-family: 'Noto Serif JP', serif; font-weight: 700; color: var(--green-dark); background: var(--cream);">03</div>
+                        <h3>定期清掃プラン</h3>
+                    </div>
+                    <div class="service-body">
+                        <p>年間を通じて定期的にお墓を清掃・管理いたします。杉の設置を含む充実のプランで、いつでもきれいな状態を保ちます。</p>
+                        <div class="service-price">年額 39,600円</div>
+                    </div>
+                </div>
+                <div class="service-card">
+                    <div class="service-header">
+                        <div class="service-icon" style="font-size: 0.9em; font-family: 'Noto Serif JP', serif; font-weight: 700; color: var(--green-dark); background: var(--cream);">04</div>
+                        <h3>アレンジメント・花束</h3>
+                    </div>
+                    <div class="service-body">
+                        <p>誕生日、記念日、お見舞い、お供えなど、さまざまなシーンに合わせた花束やアレンジメントをお作りします。ご予算やご要望に応じてお作りいたします。</p>
+                        <div class="service-price">1,000円〜</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 料金 -->
+    <section class="section pricing" id="pricing">
+        <div class="section-inner">
+            <h2 class="section-title">料金のご案内</h2>
+            <p class="section-subtitle">明朗会計でご案内いたします</p>
+            <div class="pricing-table">
+                <div class="pricing-row">
+                    <div class="pricing-name">
+                        供花代行
+                        <small>お花代は別途</small>
+                    </div>
+                    <div class="pricing-amount">500円〜 <small>/回</small></div>
+                </div>
+                <div class="pricing-row">
+                    <div class="pricing-name">
+                        墓清掃（都度）
+                        <small>草むしり・水洗いなど</small>
+                    </div>
+                    <div class="pricing-amount">5,000円〜</div>
+                </div>
+                <div class="pricing-row">
+                    <div class="pricing-name">
+                        定期清掃プラン
+                        <small>年間管理・杉の設置込み</small>
+                    </div>
+                    <div class="pricing-amount">39,600円 <small>/年</small></div>
+                </div>
+                <div class="pricing-row">
+                    <div class="pricing-name">
+                        花束・アレンジメント
+                        <small>ご予算に応じてお作りします</small>
+                    </div>
+                    <div class="pricing-amount">1,000円〜</div>
+                </div>
+            </div>
+            <p class="pricing-note">※ 料金は内容により変動する場合がございます。お気軽にご相談ください。</p>
+        </div>
+    </section>
+
+    <!-- ご利用の流れ -->
+    <section class="section" id="flow">
+        <div class="section-inner">
+            <h2 class="section-title">ご利用の流れ</h2>
+            <p class="section-subtitle">定期供花・墓清掃サービス</p>
+            <div class="flow-steps">
+                <div class="flow-step">
+                    <div class="flow-number">1</div>
+                    <h4>お問い合わせ</h4>
+                    <p>お電話またはメールでお気軽にご連絡ください</p>
+                    <span class="flow-arrow">→</span>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-number">2</div>
+                    <h4>お墓の確認</h4>
+                    <p>墓地の場所や現在の状態を確認いたします</p>
+                    <span class="flow-arrow">→</span>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-number">3</div>
+                    <h4>プランのご相談</h4>
+                    <p>ご要望に合わせて最適なプランをご提案します</p>
+                    <span class="flow-arrow">→</span>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-number">4</div>
+                    <h4>サービス開始</h4>
+                    <p>定期的にお墓を丁寧にお手入れいたします</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 店舗情報 -->
+    <section class="section shop-info" id="shop">
+        <div class="section-inner">
+            <h2 class="section-title">店舗情報</h2>
+            <p class="section-subtitle">お気軽にお立ち寄りください</p>
+            <div class="shop-grid">
+                <ul class="shop-detail-list">
+                    <li>
+                        <span class="shop-label">店名</span>
+                        <span class="shop-value">持増愛花店</span>
+                    </li>
+                    <li>
+                        <span class="shop-label">住所</span>
+                        <span class="shop-value">〒890-0005<br>鹿児島市唐湊2-8-8</span>
+                    </li>
+                    <li>
+                        <span class="shop-label">電話</span>
+                        <span class="shop-value"><a href="tel:099-254-4341">099-254-4341</a></span>
+                    </li>
+                    <li>
+                        <span class="shop-label">メール</span>
+                        <span class="shop-value"><a href="mailto:mochimasuaikaten@gmail.com">mochimasuaikaten@gmail.com</a></span>
+                    </li>
+                    <li>
+                        <span class="shop-label">営業時間</span>
+                        <span class="shop-value">7:00〜18:00（季節により変動）</span>
+                    </li>
+                    <li>
+                        <span class="shop-label">定休日</span>
+                        <span class="shop-value">年中無休</span>
+                    </li>
+                    <li>
+                        <span class="shop-label">Instagram</span>
+                        <span class="shop-value"><a href="https://www.instagram.com/mochimasu_aikaten/" target="_blank">@mochimasu_aikaten</a></span>
+                    </li>
+                </ul>
+                <div class="map-container">
+                    <iframe
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3396.5!2d130.533!3d31.583!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2z6bm_5YWQ5bO25biC5ZSQ5rmK!5e0!3m2!1sja!2sjp!4v1600000000000"
+                        allowfullscreen=""
+                        loading="lazy"
+                        referrerpolicy="no-referrer-when-downgrade">
+                    </iframe>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta" id="contact">
+        <h2>お墓のことでお困りですか？</h2>
+        <p>供花・墓清掃のご相談、花束のご注文など<br>お気軽にお問い合わせください</p>
+        <div class="cta-buttons">
+            <a href="tel:099-254-4341" class="btn btn-white btn-tel">099-254-4341</a>
+            <a href="mailto:mochimasuaikaten@gmail.com" class="btn btn-outline">メールで問い合わせ</a>
+            <a href="https://www.instagram.com/mochimasu_aikaten/" target="_blank" class="btn btn-outline">Instagram</a>
+        </div>
+    </section>
+
+    <!-- フッター -->
+    <footer class="footer">
+        <p>&copy; 持増愛花店 | 鹿児島市唐湊2-8-8 | <a href="tel:099-254-4341">099-254-4341</a></p>
+    </footer>
+
+    <script>
+        function toggleMenu() {
+            document.getElementById('navLinks').classList.toggle('open');
+        }
+
+        // ナビリンククリックでメニュー閉じる
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', () => {
+                document.getElementById('navLinks').classList.remove('open');
+            });
+        });
+
+        // スクロール時のナビ背景
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('.nav');
+            if (window.scrollY > 50) {
+                nav.style.boxShadow = '0 2px 20px rgba(0,0,0,0.12)';
+            } else {
+                nav.style.boxShadow = '0 1px 10px rgba(0,0,0,0.08)';
+            }
+        });
+    </script>
+
+</body>
+</html>
